@@ -1,0 +1,45 @@
+{
+  "name": "locus-back",
+  "version": "0.0.1",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon",
+    "start:prod": "yarn build && node ./dist/main.js",
+    "build": "./node_modules/.bin/rimraf ./dist && ./node_modules/.bin/tsc --skipLibCheck",
+    "lint": "eslint src --ext js,ts --report-unused-disable-directives --max-warnings 20",
+    "lint:fix": "eslint src --ext js,ts --fix"
+  },
+  "_moduleAliases": {
+    "app": "./dist/app",
+    "config": "./dist/config",
+    "controllers": "./dist/controllers",
+    "models": "./dist/models",
+    "middleware": "./dist/middleware",
+    "routes": "./dist/routes",
+    "utils": "./dist/utils"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-fileupload": "^1.5.0",
+    "module-alias": "^2.2.3",
+    "pg": "^8.11.5",
+    "rimraf": "^5.0.5",
+    "sequelize": "^6.37.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/module-alias": "^2.0.4",
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}
