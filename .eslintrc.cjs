@@ -2,7 +2,11 @@ const path = require('path');
 
 module.exports = {
   root: true,
-  env: { browser: true, es2020: true },
+  env: {
+    browser: false,
+    node: true,
+    es2020: true,
+  },
   plugins: ['@typescript-eslint', 'prettier'],
   extends: [
     'eslint:recommended',
@@ -13,6 +17,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
+    requireConfigFile: false,
   },
   settings: {
     'import/resolver': {
@@ -36,15 +41,6 @@ module.exports = {
     'max-len': [1, { code: 120 }],
     'prefer-const': 'warn',
 
-    'react/jsx-key': 'warn',
-    'react/prop-types': 'off',
-    'react/react-in-jsx-scope': 'off',
-
     '@typescript-eslint/no-unused-vars': 'off',
-
-    'compat/compat': 'warn',
-
-    'import/order': importOrderRule,
-    'import/no-named-as-default-member': 'off',
   },
 };
