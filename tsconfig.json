@@ -16,8 +16,9 @@
       "app/*": ["app/*"],
       "config/*": ["config/*"],
       "controllers/*": ["controllers/*"],
-      "models/*": ["models/*"],
+      "infrastructure/*": ["infrastructure/*"],
       "middleware/*": ["middleware/*"],
+      "models/*": ["models/*"],
       "routes/*": ["routes/*"],
       "utils/*": ["utils/*"]
     }

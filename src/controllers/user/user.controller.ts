@@ -1,53 +1,50 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
+import { removeSessionToken } from 'infrastructure/session';
 import UserModel from 'models/user.model.js';
 import { ApiError } from 'middleware/error';
 import { returnTrimOrNull } from 'utils/helpers';
 
-import { UserCreateRequest, UserDeleteRequest, UserEditRequest, UserGetRequest } from './types';
+import { UserDeleteRequest, UserEditRequest, UserGetRequest } from './types';
 
 class UserController {
+  // todo: only for dev
+  // GET /api/user/all
+  getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const users = await UserModel.findAll();
+
+      res.status(HTTPStatusCodes.OK).json(users);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getAllUsers: ${err.message}`));
+      }
+    }
+  };
+
   // GET /api/user/user
   getUser = async (req: UserGetRequest, res: Response, next: NextFunction) => {
     try {
       const { id: userId } = req.body;
 
       if (!userId) {
-        next(ApiError.unauthorized('Пользователь с таким id не найден'));
+        return next(ApiError.unauthorized('Пользователь с таким id не найден'));
       }
 
       const user = await UserModel.findByPk(userId);
 
       if (!user) {
-        next(ApiError.badRequest('Пользователь не найден'));
+        return next(ApiError.badRequest('Пользователь не найден'));
       }
 
-      res.status(HTTPStatusCodes.OK).json(user);
+      // todo: send password on dev only
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...restUser } = user.get();
+      res.status(HTTPStatusCodes.OK).json(restUser);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`getUser: ${err.message}`));
-      }
-    }
-  };
-
-  // Used in register route
-  createUser = async (req: UserCreateRequest, res: Response, next: NextFunction) => {
-    try {
-      console.log('createUser req.body', req.body);
-
-      const user = await UserModel.create({
-        username: req.body.username,
-        email: req.body.email,
-        password: req.body.password,
-      });
-
-      res.status(HTTPStatusCodes.CREATED).json(user);
-
-      return user.id;
-    } catch (err) {
-      if (err instanceof Error) {
-        next(ApiError.badRequest(`createUser: ${err.message}`));
       }
     }
   };
@@ -68,10 +65,15 @@ class UserController {
       user.email = email ? email.trim() : user.email;
       user.name = name !== undefined ? returnTrimOrNull(name) : user.name;
       user.surname = surname !== undefined ? returnTrimOrNull(surname) : user.surname;
+      // todo: add password change
 
-      await user.update({ name, surname, email });
+      if (!user.changed('email') && !user.changed('name') && !user.changed('surname')) {
+        return res.status(HTTPStatusCodes.OK).send();
+      }
 
-      res.status(HTTPStatusCodes.OK).json({ message: 'Пользователь изменен' });
+      await user.save();
+
+      res.status(HTTPStatusCodes.OK).json({ message: 'Данные пользователя успешно изменены' });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`editUser: ${err.message}`));
@@ -91,6 +93,8 @@ class UserController {
       if (!user) {
         return next(ApiError.badRequest('Пользователь не найден'));
       }
+
+      removeSessionToken(res);
 
       await user.destroy();
 

@@ -18,11 +18,13 @@ class User extends Model {
 
   @Column({
     type: DataType.STRING,
+    defaultValue: null,
   })
   declare name?: string | null;
 
   @Column({
     type: DataType.STRING,
+    defaultValue: null,
   })
   declare surname?: string | null;
 

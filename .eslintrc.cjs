@@ -41,6 +41,6 @@ module.exports = {
     'max-len': [1, { code: 120 }],
     'prefer-const': 'warn',
 
-    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
   },
 };

@@ -7,11 +7,10 @@ import { removeSessionToken } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
 import UserModel from 'models/user.model.js';
 
-import userController, { type UserCreateRequest } from 'controllers/user';
 import { isRequiredString } from 'utils/helpers';
 
 import { createToken } from './auth.service';
-import { UserLoginRequest } from './types';
+import type { UserLoginRequest, UserRegisterRequest } from './types';
 
 class AuthController {
   // POST /api/auth/login
@@ -20,10 +19,16 @@ class AuthController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return next(ApiError.badRequest(`Некорректные данные при авторизации: ${errors.array()}`));
+        return next(
+          ApiError.badRequest(
+            `Некорректные данные при авторизации: ${errors.array().map((v) => v.msg)}`
+          )
+        );
       }
 
-      const { emailOrUsername, password } = req.body;
+      const { email, username, password } = req.body;
+
+      const emailOrUsername = email || username;
 
       if (!emailOrUsername || !isRequiredString(password)) {
         return next(ApiError.badRequest('Невалидные данные'));
@@ -31,8 +36,15 @@ class AuthController {
 
       const trimmedEmailOrUsername = emailOrUsername.trim();
 
-      let user = await UserModel.findOne({ where: { email: trimmedEmailOrUsername } });
-      user = user || (await UserModel.findOne({ where: { username: trimmedEmailOrUsername } }));
+      let user;
+
+      if (email) {
+        user = await UserModel.findOne({ where: { email: trimmedEmailOrUsername } });
+      } else if (username) {
+        user = await UserModel.findOne({ where: { username: trimmedEmailOrUsername } });
+      }
+
+      console.log('login: user', user);
 
       if (!user) {
         return next(ApiError.badRequest('Пользователь не найден'));
@@ -64,12 +76,16 @@ class AuthController {
   };
 
   // POST /api/auth/register
-  register = async (req: UserCreateRequest, res: Response, next: NextFunction) => {
+  register = async (req: UserRegisterRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        return next(ApiError.badRequest(`Некорректные данные при регистрации: ${errors.array()}`));
+        return next(
+          ApiError.badRequest(
+            `Некорректные данные при регистрации: ${errors.array().map((v) => v.msg)}`
+          )
+        );
       }
 
       const { email, password, username } = req.body;
@@ -95,19 +111,26 @@ class AuthController {
         password: hash,
       };
 
-      const userId = await userController.createUser(req, res, next);
+      const user = await UserModel.create({
+        username: req.body.username,
+        email: req.body.email,
+        password: req.body.password,
+      });
 
-      if (!userId) {
+      if (!user.id) {
         return next(ApiError.internal('Произошла ошибка'));
       }
 
-      const token = createToken(res, userId);
+      const token = createToken(res, user.id);
 
       if (!token) {
         return next(ApiError.internal('Произошла ошибка при создании сессии'));
       }
 
-      res.status(HTTPStatusCodes.OK);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: hashPassword, ...restUser } = user.get();
+
+      res.status(HTTPStatusCodes.CREATED).json(restUser);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`register: ${err.message}`));

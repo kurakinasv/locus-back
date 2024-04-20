@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { HTTPStatusCodes } from 'config/status-codes';
 import { type AuthUserRequest, REFRESH_TIME, createToken } from 'controllers/auth';
 import { checkSession } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
@@ -13,24 +12,23 @@ const authMiddleware = (req: Request | AuthUserRequest, res: Response, next: Nex
   try {
     const jwtPayload = checkSession(req, res, next);
 
-    if (!jwtPayload?.user?.userId || !jwtPayload?.exp) {
-      return next(ApiError.unauthorized('Нет авторизации'));
+    if (!jwtPayload || !jwtPayload.user?.id || !jwtPayload?.exp) {
+      return next(ApiError.unauthorized('Пользователь не авторизован'));
     }
 
     req = {
       ...req,
-      user: { userId: jwtPayload.user.userId },
+      user: { id: jwtPayload.user.id },
     } as AuthUserRequest;
 
-    if (jwtPayload.exp - Date.now() > REFRESH_TIME) {
+    // jwtPayload.exp in seconds, Date.now() in milliseconds
+    if (jwtPayload.exp * 1000 - Date.now() > REFRESH_TIME) {
       return next();
     }
 
-    const newToken = createToken(res, jwtPayload.user.userId);
+    console.log('refresh');
 
-    if (newToken) {
-      res.status(HTTPStatusCodes.OK).json('Токен был обновлен');
-    }
+    createToken(res, jwtPayload.user.id);
 
     next();
   } catch (err) {

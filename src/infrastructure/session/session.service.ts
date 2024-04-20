@@ -4,15 +4,13 @@ import jwt from 'jsonwebtoken';
 import { ApiError } from 'middleware/error';
 import type { JWTToken } from 'typings/jwt';
 
-export const checkSession = (req: Request, res: Response, next: NextFunction) => {
-  const sessionToken = getSessionToken(req, next);
-
-  const authCookie = req.cookies[process.env.AUTH_COOKIE_NAME];
+export const checkSession = (req: Request, res: Response, next: NextFunction): JWTToken | null => {
+  const authCookie = getSessionToken(req, next);
 
   if (!authCookie) {
     removeSessionToken(res);
 
-    return next(ApiError.unauthorized('Нет авторизации'));
+    return null;
   }
 
   const jwtPayload = jwt.verify(authCookie, process.env.JWT_SECRET) as JWTToken;
@@ -25,15 +23,17 @@ export const removeSessionToken = (res: Response) => {
 };
 
 export const getSessionToken = (req: Request, next: NextFunction) => {
-  if (!req.cookies) {
-    return next(ApiError.unauthorized('No authorization'));
+  const cookies = req.headers.cookie;
+
+  if (!cookies) {
+    return next(ApiError.unauthorized('Пользователь не авторизован'));
   }
 
-  const sessionToken = req.cookies[process.env.AUTH_COOKIE_NAME];
-
-  if (!sessionToken) {
-    return next(ApiError.unauthorized('No authorization'));
-  }
+  // const token = req.headers.authorization?.split(' ')[1]; // Bearer <TOKEN>
+  const sessionToken = cookies
+    .split(';')
+    .find((cookie) => cookie.includes(process.env.AUTH_COOKIE_NAME))
+    ?.split('=')[1];
 
   return sessionToken;
 };

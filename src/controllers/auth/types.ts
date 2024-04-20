@@ -1,16 +1,27 @@
 import { Request } from 'express';
 
+import User from 'models/user.model';
+
 import { DefaultId } from 'typings/common';
 
 export interface AuthUserRequest extends Request {
   user?: {
-    userId: DefaultId;
+    id: DefaultId;
   };
 }
 
 export interface UserLoginRequest extends Request {
   body: {
-    emailOrUsername: string;
-    password: string;
+    username?: User['username'];
+    email?: User['email'];
+    password: User['password'];
+  };
+}
+
+export interface UserRegisterRequest extends Request {
+  body: {
+    username: User['username'];
+    email: User['email'];
+    password: User['password'];
   };
 }

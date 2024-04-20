@@ -1,4 +1,4 @@
-export const returnTrimOrNull = (value: string) => {
+export const returnTrimOrNull = (value: string | null) => {
   const trimmed = String(value).trim();
   return trimmed || null;
 };

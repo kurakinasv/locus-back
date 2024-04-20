@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 
 import ApiError from './ApiError.js';
 
-const errorMiddleware = (err: ApiError, req: Request, res: Response, next: NextFunction) => {
+const errorMiddleware = (err: ApiError, req: Request, res: Response) => {
   const { status, message } = err;
 
   if (err instanceof ApiError) {

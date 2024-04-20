@@ -1,5 +1,6 @@
 import { Request } from 'express';
 
+import { AuthUserRequest } from 'controllers/auth';
 import User from 'models/user.model';
 import { DefaultId } from 'typings/common';
 
@@ -9,15 +10,7 @@ export interface UserGetRequest extends Request {
   };
 }
 
-export interface UserCreateRequest extends Request {
-  body: {
-    username: User['username'];
-    email: User['email'];
-    password: User['password'];
-  };
-}
-
-export interface UserEditRequest extends Request {
+export interface UserEditRequest extends AuthUserRequest {
   body: {
     id: DefaultId;
     name?: User['name'];
@@ -27,7 +20,7 @@ export interface UserEditRequest extends Request {
   };
 }
 
-export interface UserDeleteRequest extends Request {
+export interface UserDeleteRequest extends AuthUserRequest {
   body: {
     id: DefaultId;
   };

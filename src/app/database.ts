@@ -32,6 +32,7 @@ class SequelizeDB extends DataBase<Sequelize> {
       await this.db.sync();
     } catch (error) {
       if (error instanceof Error) {
+        // eslint-disable-next-line no-console
         console.error(error.message);
       }
     }

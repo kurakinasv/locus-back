@@ -2,6 +2,6 @@ dist
 node_modules
 
 .env
-api-test.http
+api-tests
 
 .DS_Store
