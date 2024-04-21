@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
+import { AuthUserRequest } from 'controllers/auth';
 import { removeSessionToken } from 'infrastructure/session';
-import UserModel from 'models/user.model.js';
+import UserModel from 'models/user.model';
 import { ApiError } from 'middleware/error';
 import { returnTrimOrNull } from 'utils/helpers';
 
-import { UserDeleteRequest, UserEditRequest, UserGetRequest } from './types';
+import { UserDeleteRequest, UserEditRequest } from './types';
 
 class UserController {
   // todo: only for dev
@@ -24,9 +25,9 @@ class UserController {
   };
 
   // GET /api/user/user
-  getUser = async (req: UserGetRequest, res: Response, next: NextFunction) => {
+  getUser = async (req: AuthUserRequest, res: Response, next: NextFunction) => {
     try {
-      const { id: userId } = req.body;
+      const userId = req.user?.id;
 
       if (!userId) {
         return next(ApiError.unauthorized('Пользователь с таким id не найден'));
@@ -86,7 +87,7 @@ class UserController {
     try {
       console.log('deleteUser', req.params, req.body);
 
-      const { id: toRemoveId } = req.body;
+      const toRemoveId = req.user?.id;
 
       const user = await UserModel.findByPk(toRemoveId);
 

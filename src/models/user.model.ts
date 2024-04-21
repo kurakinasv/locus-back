@@ -1,6 +1,9 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { BelongsToMany, Column, DataType, Model, Table } from 'sequelize-typescript';
 
 import { DefaultId } from 'typings/common';
+
+import Group from './group.model';
+import UserGroup from './user-group.model';
 
 @Table({
   // timestamps: true, // default, createdAt and updatedAt create automatically
@@ -47,6 +50,11 @@ class User extends Model {
     allowNull: false,
   })
   declare password: string;
+
+  // todo: image
+
+  @BelongsToMany(() => Group, () => UserGroup)
+  declare groups: Array<Group & { UserGroup: UserGroup }>;
 }
 
 export default User;

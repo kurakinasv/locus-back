@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 import ApiError from './ApiError.js';
 
-const errorMiddleware = (err: ApiError, req: Request, res: Response) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- next is required for Express error middleware
+const errorMiddleware = (err: ApiError, req: Request, res: Response, next: NextFunction) => {
   const { status, message } = err;
 
   if (err instanceof ApiError) {

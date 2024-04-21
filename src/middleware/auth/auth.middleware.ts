@@ -16,10 +16,7 @@ const authMiddleware = (req: Request | AuthUserRequest, res: Response, next: Nex
       return next(ApiError.unauthorized('Пользователь не авторизован'));
     }
 
-    req = {
-      ...req,
-      user: { id: jwtPayload.user.id },
-    } as AuthUserRequest;
+    (req as AuthUserRequest).user = { id: jwtPayload.user.id };
 
     // jwtPayload.exp in seconds, Date.now() in milliseconds
     if (jwtPayload.exp * 1000 - Date.now() > REFRESH_TIME) {
