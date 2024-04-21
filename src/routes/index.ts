@@ -1,6 +1,6 @@
 import { type Express, Router } from 'express';
 
-import testRouter from './test.router';
+import echoRouter from './echo.router';
 import userRouter from './user.router';
 import authRouter from './auth.router';
 import groupRouter from './group.router';
@@ -9,13 +9,7 @@ import userGroupRouter from './user-group.router';
 const router = Router();
 
 const initRoutes = (app: Express) => {
-  app.get('/', (req, res) => {
-    console.log('Hello World!');
-
-    res.send('Hello World!');
-  });
-
-  router.use('/test', testRouter);
+  router.use('/', echoRouter);
   router.use('/user', userRouter);
   router.use('/auth', authRouter);
   router.use('/group', groupRouter);
