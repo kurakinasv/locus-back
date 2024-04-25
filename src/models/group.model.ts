@@ -5,6 +5,7 @@ import { DefaultId } from 'typings/common';
 import UserGroup from './user-group.model';
 import User from './user.model';
 import Chore from './chore.model';
+import ChoreCategory from './choreCategory.model';
 
 @Table({
   modelName: 'Group',
@@ -35,6 +36,9 @@ class Group extends Model {
 
   @HasMany(() => Chore, 'groupId')
   declare chores: Chore[];
+
+  @HasMany(() => Chore, 'groupId')
+  declare choreCategories: ChoreCategory[];
 }
 
 export default Group;

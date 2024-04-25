@@ -1,10 +1,11 @@
 import { type Express, Router } from 'express';
 
-import choreRouter from './chore.router';
-import echoRouter from './echo.router';
-import userRouter from './user.router';
 import authRouter from './auth.router';
+import choreRouter from './chore.router';
+import choreCategoryRouter from './choreCategory.router';
+import echoRouter from './echo.router';
 import groupRouter from './group.router';
+import userRouter from './user.router';
 import userGroupRouter from './user-group.router';
 
 const router = Router();
@@ -16,6 +17,7 @@ const initRoutes = (app: Express) => {
   router.use('/group', groupRouter);
   router.use('/user-group', userGroupRouter);
   router.use('/chore', choreRouter);
+  router.use('/chore', choreCategoryRouter);
 
   app.use('/api', router);
 };
