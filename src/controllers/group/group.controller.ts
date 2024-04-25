@@ -93,8 +93,8 @@ class GroupController {
         return next(ApiError.badRequest('Группа не найдена'));
       }
 
-      group.name = name !== undefined ? name : group.name;
-      group.image = image !== undefined ? image : group.image;
+      group.name = name ?? group.name;
+      group.image = image ?? group.image;
 
       await group.save();
 
