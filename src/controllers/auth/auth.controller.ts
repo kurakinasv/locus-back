@@ -47,7 +47,7 @@ class AuthController {
       console.log('login: user', user);
 
       if (!user) {
-        return next(ApiError.badRequest('Пользователь не найден'));
+        return next(ApiError.notFound('Пользователь не найден'));
       }
 
       const expectedEmail = user.email;
@@ -58,7 +58,7 @@ class AuthController {
         (expectedEmail !== trimmedEmailOrUsername && expectedUsername !== trimmedEmailOrUsername) ||
         !isPasswordCorrect
       ) {
-        return next(ApiError.badRequest('Пользователь не найден'));
+        return next(ApiError.notFound('Пользователь не найден'));
       }
 
       const token = createToken(res, user.id);
