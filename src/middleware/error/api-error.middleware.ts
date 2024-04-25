@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { HTTPStatusCodes } from 'config/status-codes.js';
+
 import ApiError from './ApiError.js';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- next is required for Express error middleware
@@ -10,7 +12,9 @@ const errorMiddleware = (err: ApiError, req: Request, res: Response, next: NextF
     return res.status(status).json({ message });
   }
 
-  return res.status(500).json({ message: 'Кажется, это необработанная ошибка :(' });
+  return res
+    .status(HTTPStatusCodes.INTERNAL_SERVER_ERROR)
+    .json({ message: 'Кажется, это необработанная ошибка :(' });
 };
 
 export default errorMiddleware;

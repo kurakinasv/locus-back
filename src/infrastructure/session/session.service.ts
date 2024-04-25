@@ -1,11 +1,10 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { ApiError } from 'middleware/error';
 import type { JWTToken } from 'typings/jwt';
 
-export const checkSession = (req: Request, res: Response, next: NextFunction): JWTToken | null => {
-  const authCookie = getSessionToken(req, next);
+export const checkSession = (req: Request, res: Response): JWTToken | null => {
+  const authCookie = getSessionToken(req);
 
   if (!authCookie) {
     removeSessionToken(res);
@@ -22,11 +21,11 @@ export const removeSessionToken = (res: Response) => {
   return res.cookie(process.env.AUTH_COOKIE_NAME, '', { expires: new Date() });
 };
 
-export const getSessionToken = (req: Request, next: NextFunction) => {
+export const getSessionToken = (req: Request) => {
   const cookies = req.headers.cookie;
 
   if (!cookies) {
-    return next(ApiError.unauthorized('Пользователь не авторизован'));
+    return null;
   }
 
   // const token = req.headers.authorization?.split(' ')[1]; // Bearer <TOKEN>
