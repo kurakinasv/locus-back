@@ -1,7 +1,33 @@
 import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
+import type { UUIDString } from 'typings/common';
 import type { JWTToken } from 'typings/jwt';
+import { getCookieByName } from 'utils/cookies';
+
+// group
+
+export const checkGroupLogin = (req: Request) => {
+  const cookies = req.headers.cookie;
+
+  if (!cookies) {
+    return null;
+  }
+
+  return getCookieByName(cookies, process.env.GROUP_COOKIE_NAME);
+};
+
+export const loginToGroup = (res: Response, groupId: UUIDString) => {
+  return res.cookie(process.env.GROUP_COOKIE_NAME, groupId, {
+    httpOnly: true,
+  });
+};
+
+export const logoutFromGroup = (res: Response) => {
+  return res.cookie(process.env.GROUP_COOKIE_NAME, '', { expires: new Date() });
+};
+
+// auth
 
 export const checkSession = (req: Request, res: Response): JWTToken | null => {
   const authCookie = getSessionToken(req);
@@ -18,6 +44,8 @@ export const checkSession = (req: Request, res: Response): JWTToken | null => {
 };
 
 export const removeSessionToken = (res: Response) => {
+  logoutFromGroup(res);
+
   return res.cookie(process.env.AUTH_COOKIE_NAME, '', { expires: new Date() });
 };
 
@@ -28,11 +56,5 @@ export const getSessionToken = (req: Request) => {
     return null;
   }
 
-  // const token = req.headers.authorization?.split(' ')[1]; // Bearer <TOKEN>
-  const sessionToken = cookies
-    .split(';')
-    .find((cookie) => cookie.includes(process.env.AUTH_COOKIE_NAME))
-    ?.split('=')[1];
-
-  return sessionToken;
+  return getCookieByName(cookies, process.env.AUTH_COOKIE_NAME);
 };

@@ -3,19 +3,19 @@ import { Response, NextFunction } from 'express';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { ApiError } from 'middleware/error';
 import ChoreCategoryModel from 'models/choreCategory.model';
+import type { GroupLoggedInRequest } from 'controllers/group';
 
 import {
   ChoreCategoryCreateRequest,
   ChoreCategoryDeleteRequest,
   ChoreCategoryEditRequest,
-  ChoreCategoryGetRequest,
 } from './types';
 
 class ChoreCategoryController {
   // GET /api/chore/category
-  getChoreCategories = async (req: ChoreCategoryGetRequest, res: Response, next: NextFunction) => {
+  getChoreCategories = async (req: GroupLoggedInRequest, res: Response, next: NextFunction) => {
     try {
-      const { groupId } = req.body;
+      const groupId = req.currentGroup?.id;
 
       if (!groupId) {
         return next(ApiError.badRequest('Не передан id группы'));
@@ -42,17 +42,27 @@ class ChoreCategoryController {
     next: NextFunction
   ) => {
     try {
-      const { groupId, name } = req.body;
+      const { name, icon } = req.body;
+      const groupId = req.currentGroup?.id;
 
-      const trimmedName = name.trim();
+      const trimmedName = name?.trim();
 
       if (!groupId || !trimmedName) {
         return next(ApiError.badRequest('Не переданы все необходимые данные'));
       }
 
+      const existCategory = await ChoreCategoryModel.findOne({
+        where: { name: trimmedName, groupId },
+      });
+
+      if (existCategory?.name.toLowerCase() === trimmedName.toLowerCase()) {
+        return next(ApiError.badRequest('Категория с таким именем уже существует'));
+      }
+
       const choreCategory = await ChoreCategoryModel.create({
         groupId,
         name: trimmedName,
+        icon,
       });
 
       if (!choreCategory) {
@@ -72,6 +82,7 @@ class ChoreCategoryController {
     try {
       const { name, icon, isArchived } = req.body;
       const { id } = req.params;
+      const groupId = req.currentGroup?.id;
 
       if (!id) {
         return next(ApiError.badRequest('Не передан id категории'));
@@ -84,7 +95,18 @@ class ChoreCategoryController {
         return;
       }
 
-      const choreCategory = await ChoreCategoryModel.findByPk(id);
+      const existCategory = await ChoreCategoryModel.findOne({
+        where: { name: trimmedName, groupId },
+      });
+
+      if (
+        existCategory?.name.toLowerCase() === trimmedName?.toLowerCase() &&
+        existCategory?.id !== id
+      ) {
+        return next(ApiError.badRequest('Категория с таким именем уже существует'));
+      }
+
+      const choreCategory = await ChoreCategoryModel.findOne({ where: { id, groupId } });
 
       if (!choreCategory) {
         return next(ApiError.badRequest('Категория не найдена'));
@@ -108,12 +130,13 @@ class ChoreCategoryController {
   ) => {
     try {
       const { id } = req.params;
+      const groupId = req.currentGroup?.id;
 
       if (!id) {
         return next(ApiError.badRequest('Не передан id категории'));
       }
 
-      const choreCategory = await ChoreCategoryModel.findByPk(id);
+      const choreCategory = await ChoreCategoryModel.findOne({ where: { id, groupId } });
 
       if (!choreCategory) {
         return next(ApiError.badRequest('Категория не найдена'));
@@ -121,7 +144,7 @@ class ChoreCategoryController {
 
       await choreCategory.destroy();
 
-      res.status(HTTPStatusCodes.OK).json(choreCategory);
+      res.status(HTTPStatusCodes.OK).json({ message: 'Категория удалена' });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`deleteChoreCategory: ${err.message}`));

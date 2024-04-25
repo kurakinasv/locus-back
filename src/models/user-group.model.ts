@@ -44,6 +44,13 @@ class UserGroup extends Model {
     defaultValue: false,
   })
   declare isAdmin: boolean;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare isLoggedIn: boolean;
 }
 
 export default UserGroup;

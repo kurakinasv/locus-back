@@ -7,6 +7,7 @@ const router = Router();
 
 // /api/user-group
 router.post('/join', authMiddleware, userGroupController.joinGroup);
+router.put('/login', authMiddleware, userGroupController.loginToGroup);
 router.put('/edit', authMiddleware, userGroupController.editUserGroup);
 router.delete('/leave', authMiddleware, userGroupController.leaveGroup);
 

@@ -2,6 +2,12 @@ import { AuthUserRequest } from 'controllers/auth';
 import Group from 'models/group.model';
 import { UUIDString } from 'typings/common';
 
+export interface GroupLoggedInRequest extends AuthUserRequest {
+  currentGroup?: {
+    id: UUIDString;
+  };
+}
+
 export interface GroupGetRequest extends AuthUserRequest {
   body: {
     id: UUIDString;

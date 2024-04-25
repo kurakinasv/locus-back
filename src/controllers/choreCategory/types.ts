@@ -1,21 +1,15 @@
-import { AuthUserRequest } from 'controllers/auth';
+import { GroupLoggedInRequest } from 'controllers/group/types';
 import ChoreCategoryModel from 'models/choreCategory.model';
-import { NumberString, UUIDString } from 'typings/common';
+import { NumberString } from 'typings/common';
 
-export interface ChoreCategoryGetRequest extends AuthUserRequest {
+export interface ChoreCategoryCreateRequest extends GroupLoggedInRequest {
   body: {
-    groupId: UUIDString;
-  };
-}
-
-export interface ChoreCategoryCreateRequest extends AuthUserRequest {
-  body: {
-    groupId: UUIDString;
     name: ChoreCategoryModel['name'];
+    icon?: ChoreCategoryModel['icon'];
   };
 }
 
-export interface ChoreCategoryEditRequest extends AuthUserRequest {
+export interface ChoreCategoryEditRequest extends GroupLoggedInRequest {
   body: {
     name?: ChoreCategoryModel['name'];
     icon?: ChoreCategoryModel['icon'];
@@ -26,7 +20,7 @@ export interface ChoreCategoryEditRequest extends AuthUserRequest {
   };
 }
 
-export interface ChoreCategoryDeleteRequest extends AuthUserRequest {
+export interface ChoreCategoryDeleteRequest extends GroupLoggedInRequest {
   params: {
     id: NumberString;
   };
