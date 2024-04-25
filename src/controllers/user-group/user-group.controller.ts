@@ -3,9 +3,9 @@ import { Response, NextFunction } from 'express';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { ApiError } from 'middleware/error';
 import UserGroupModel from 'models/user-group.model';
+import { UUIDString } from 'typings/common';
 
 import { UserGroupEditRequest, UserGroupJoinRequest, UserGroupLeaveRequest } from './types';
-import { DefaultId } from 'typings/common';
 
 class UserGroupController {
   // POST /api/user-group/join
@@ -91,7 +91,7 @@ class UserGroupController {
     }
   };
 
-  private _isUserExistInGroup = async (userId: DefaultId, groupId: DefaultId) => {
+  private _isUserExistInGroup = async (userId: UUIDString, groupId: UUIDString) => {
     const isExist = await UserGroupModel.findOne({ where: { userId, groupId } });
     return !!isExist;
   };

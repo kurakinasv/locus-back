@@ -1,16 +1,16 @@
 import { AuthUserRequest } from 'controllers/auth';
 import ChoreCategoryModel from 'models/choreCategory.model';
-import { DefaultId } from 'typings/common';
+import { NumberString, UUIDString } from 'typings/common';
 
 export interface ChoreCategoryGetRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
   };
 }
 
 export interface ChoreCategoryCreateRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
     name: ChoreCategoryModel['name'];
   };
 }
@@ -22,12 +22,12 @@ export interface ChoreCategoryEditRequest extends AuthUserRequest {
     isArchived?: ChoreCategoryModel['isArchived'];
   };
   params: {
-    id: DefaultId;
+    id: NumberString;
   };
 }
 
 export interface ChoreCategoryDeleteRequest extends AuthUserRequest {
   params: {
-    id: DefaultId;
+    id: NumberString;
   };
 }

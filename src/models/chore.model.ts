@@ -1,6 +1,6 @@
 import { Column, DataType, Table, Model, BelongsTo, ForeignKey } from 'sequelize-typescript';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString, DefaultId } from 'typings/common';
 
 import Group from './group.model';
 import ChoreCategory from './choreCategory.model';
@@ -10,23 +10,16 @@ import ChoreCategory from './choreCategory.model';
   tableName: 'chore',
 })
 class Chore extends Model {
-  @Column({
-    primaryKey: true,
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-  })
-  declare id: DefaultId;
-
   @ForeignKey(() => Group)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
-  declare groupId: DefaultId;
+  declare groupId: UUIDString;
 
   @ForeignKey(() => ChoreCategory)
   @Column({
-    type: DataType.UUID,
+    type: DataType.INTEGER,
     allowNull: false,
   })
   declare categoryId: DefaultId;

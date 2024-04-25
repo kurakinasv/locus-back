@@ -1,6 +1,6 @@
 import { BelongsToMany, Column, DataType, HasMany, Model, Table } from 'sequelize-typescript';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 import UserGroup from './user-group.model';
 import User from './user.model';
@@ -17,7 +17,7 @@ class Group extends Model {
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
   })
-  declare id: DefaultId;
+  declare id: UUIDString;
 
   @Column({
     type: DataType.STRING,

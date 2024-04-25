@@ -2,21 +2,21 @@ import { AuthUserRequest } from 'controllers/auth';
 
 import ChoreModel from 'models/chore.model';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString, DefaultId, NumberString } from 'typings/common';
 
 export interface ChoreGetRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
   };
   query: {
     name?: ChoreModel['name'];
-    categoryId?: DefaultId;
+    categoryId?: NumberString;
   };
 }
 
 export interface ChoreCreateRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
     categoryId: DefaultId;
     name: ChoreModel['name'];
     points?: ChoreModel['points'];
@@ -25,17 +25,21 @@ export interface ChoreCreateRequest extends AuthUserRequest {
 
 export interface ChoreEditRequest extends AuthUserRequest {
   body: {
+    groupId: UUIDString;
     categoryId?: DefaultId;
     name?: ChoreModel['name'];
     points?: ChoreModel['points'];
   };
   params: {
-    id: DefaultId;
+    id: NumberString;
   };
 }
 
 export interface ChoreDeleteRequest extends AuthUserRequest {
+  body: {
+    groupId: UUIDString;
+  };
   params: {
-    id: DefaultId;
+    id: NumberString;
   };
 }

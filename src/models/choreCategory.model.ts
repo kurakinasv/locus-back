@@ -8,7 +8,7 @@ import {
   ForeignKey,
 } from 'sequelize-typescript';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString, DefaultId } from 'typings/common';
 
 import Chore from './chore.model';
 import Group from './group.model';
@@ -20,13 +20,6 @@ type ChoreCategoryIcon = 'home' | 'work' | 'shopping' | 'other';
   tableName: 'chore_category',
 })
 class ChoreCategory extends Model {
-  @Column({
-    primaryKey: true,
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
-  })
-  declare id: DefaultId;
-
   @Column({
     type: DataType.STRING,
     allowNull: false,
@@ -50,7 +43,7 @@ class ChoreCategory extends Model {
     type: DataType.UUID,
     allowNull: false,
   })
-  declare groupId: DefaultId;
+  declare groupId: UUIDString;
 
   @BelongsTo(() => Group, 'groupId')
   declare group: Group;

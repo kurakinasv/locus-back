@@ -1,6 +1,6 @@
 import { Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 import User from './user.model';
 import Group from './group.model';
@@ -15,21 +15,21 @@ class UserGroup extends Model {
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
   })
-  declare id: DefaultId;
+  declare id: UUIDString;
 
   @ForeignKey(() => User)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
-  declare userId: DefaultId;
+  declare userId: UUIDString;
 
   @ForeignKey(() => Group)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
-  declare groupId: DefaultId;
+  declare groupId: UUIDString;
 
   @Column({
     type: DataType.DECIMAL,

@@ -1,9 +1,9 @@
 import { JwtPayload } from 'jsonwebtoken';
 
-import { DefaultId } from './common';
+import { UUIDString } from './common';
 
 declare interface JWTToken extends JwtPayload {
   user?: {
-    id: DefaultId;
+    id: UUIDString;
   };
 }
