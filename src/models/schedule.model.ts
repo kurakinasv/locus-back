@@ -27,6 +27,7 @@ type ScheduleModel = {
   dateEnd: Date;
   frequency: Frequency;
   alternatingMethod: AlternatingMethod;
+  isArchived: boolean;
   userGroupIds: Array<UserGroup['id']>;
   createdBy: UserGroup['id'];
 };
@@ -34,7 +35,7 @@ type ScheduleModel = {
 export type ScheduleCreateParams = {
   choreId: Chore['id'];
   dateStart: Date;
-  dateEnd: Date;
+  dateEnd?: Date;
   frequency?: Frequency;
   alternatingMethod?: AlternatingMethod;
   userGroupIds: Array<UserGroup['id']>;
@@ -49,6 +50,7 @@ class Schedule extends Model<ScheduleModel, ScheduleCreateParams> {
   @Column({
     primaryKey: true,
     type: DataType.INTEGER,
+    autoIncrement: true,
   })
   declare id: DefaultId;
 
@@ -83,6 +85,13 @@ class Schedule extends Model<ScheduleModel, ScheduleCreateParams> {
   })
   declare alternatingMethod: AlternatingMethod;
 
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare isArchived: boolean;
+
   @ForeignKey(() => Chore)
   @Column({
     type: DataType.INTEGER,
@@ -92,7 +101,7 @@ class Schedule extends Model<ScheduleModel, ScheduleCreateParams> {
 
   @ForeignKey(() => UserGroup)
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.UUID,
     allowNull: false,
   })
   declare createdBy: UserGroup['id'];

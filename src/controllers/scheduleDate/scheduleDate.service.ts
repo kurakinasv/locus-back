@@ -4,18 +4,20 @@ import { Op, WhereOptions } from 'sequelize';
 import ScheduleService from 'controllers/schedule/schedule.service';
 import { ApiError } from 'middleware/error';
 import ScheduleModel from 'models/schedule.model';
+import ScheduleDate from 'models/scheduleDate.model';
 import ScheduleDateModel, { ScheduleDateCreateParams } from 'models/scheduleDate.model';
 
 import { SchedulesGetParams } from './types';
 
 class ScheduleDateService {
-  static getScheduleDates = async (
-    { scheduleIds, onlyFromToday = false, onlyCompleted = false }: SchedulesGetParams,
-    next: NextFunction
-  ) => {
+  static getScheduleDates = async ({
+    scheduleIds,
+    onlyFromToday = false,
+    onlyCompleted = false,
+  }: SchedulesGetParams): Promise<ScheduleDate[] | undefined> => {
     try {
       const whereOptions: WhereOptions = {
-        scheduleIds,
+        scheduleId: scheduleIds,
         date: { [Op.gte]: new Date() },
         completed: true,
       };
@@ -30,12 +32,17 @@ class ScheduleDateService {
 
       const scheduleDates = await ScheduleDateModel.findAll({ where: whereOptions });
 
-      console.log('getScheduleDates sheduleDates', scheduleDates.length, scheduleDates);
+      console.log(
+        'getScheduleDates sheduleDates',
+        scheduleDates.length,
+        scheduleDates.map((s) => s.id)
+      );
 
       return scheduleDates;
     } catch (err) {
       if (err instanceof Error) {
-        next(ApiError.badRequest(`getScheduleDates: ${err.message}`));
+        console.error(err.message);
+        return;
       }
     }
   };
@@ -51,7 +58,7 @@ class ScheduleDateService {
       return scheduleDate;
     } catch (err) {
       if (err instanceof Error) {
-        next(ApiError.badRequest(`createScheduleDate: ${err.message}`));
+        ApiError.badRequest(`createScheduleDate: ${err.message}`);
       }
     }
   };
@@ -68,10 +75,11 @@ class ScheduleDateService {
 
       if (skipCompleted) {
         completedScheduleDates =
-          (await ScheduleDateService.getScheduleDates(
-            { scheduleIds: [id], onlyCompleted: true, onlyFromToday: true },
-            next
-          )) ?? [];
+          (await ScheduleDateService.getScheduleDates({
+            scheduleIds: [id],
+            onlyCompleted: true,
+            onlyFromToday: true,
+          })) ?? [];
 
         console.log('completedScheduleDates', completedScheduleDates);
       }
@@ -121,7 +129,7 @@ class ScheduleDateService {
       return true;
     } catch (err) {
       if (err instanceof Error) {
-        next(ApiError.badRequest(`_createScheduleDates: ${err.message}`));
+        ApiError.badRequest(`createScheduleDates: ${err.message}`);
       }
 
       return false;

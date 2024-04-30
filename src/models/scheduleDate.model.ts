@@ -10,7 +10,7 @@ type ScheduleDateModel = {
   completed: boolean;
   isAssigned: boolean;
   completedAt: Date | null;
-  scheduleId: Schedule['id'] | null;
+  scheduleId: Schedule['id'];
   userGroupId: UserGroup['id'] | null;
 };
 
@@ -56,7 +56,7 @@ class ScheduleDate extends Model<ScheduleDateModel, ScheduleDateCreateParams> {
   declare completedAt: Date | null;
 
   @Column({
-    type: DataType.UUID,
+    type: DataType.BOOLEAN,
     allowNull: false,
     defaultValue: true,
   })
@@ -66,11 +66,10 @@ class ScheduleDate extends Model<ScheduleDateModel, ScheduleDateCreateParams> {
   @ForeignKey(() => Schedule)
   @Column({
     type: DataType.INTEGER,
-    allowNull: true,
-    onDelete: 'SET NULL',
+    allowNull: false,
   })
   /** Id of the schedule this task belongs to */
-  declare scheduleId: Schedule['id'] | null;
+  declare scheduleId: Schedule['id'];
 
   @ForeignKey(() => UserGroup)
   @Column({

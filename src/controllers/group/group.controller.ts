@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
-import { logoutFromGroup } from 'infrastructure/session';
+import { loginToGroup, logoutFromGroup } from 'infrastructure/session';
 import GroupModel from 'models/group.model';
 import UserGroupModel from 'models/user-group.model';
 import { ApiError } from 'middleware/error';
@@ -79,6 +79,8 @@ class GroupController {
       if (!userInGroup) {
         next(ApiError.internal('Ошибка при добавлении пользователя в группу'));
       }
+
+      loginToGroup(res, group.id);
 
       res.status(HTTPStatusCodes.CREATED).json({ group, userInGroup });
     } catch (err) {

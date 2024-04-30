@@ -14,11 +14,33 @@ import Group from './group.model';
 import ChoreCategory from './choreCategory.model';
 import Schedule from './schedule.model';
 
+type ChoreModel = {
+  id: DefaultId;
+  name: string;
+  points: number;
+  categoryId: ChoreCategory['id'];
+  groupId: Group['id'];
+};
+
+type ChoreCreateParams = {
+  name: string;
+  points?: number;
+  categoryId: ChoreCategory['id'];
+  groupId: Group['id'];
+};
+
 @Table({
   modelName: 'Chore',
   tableName: 'chore',
 })
-class Chore extends Model {
+class Chore extends Model<ChoreModel, ChoreCreateParams> {
+  @Column({
+    primaryKey: true,
+    type: DataType.INTEGER,
+    autoIncrement: true,
+  })
+  declare id: DefaultId;
+
   @ForeignKey(() => Group)
   @Column({
     type: DataType.UUID,

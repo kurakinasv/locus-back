@@ -1,12 +1,13 @@
 import { isAfter, isToday } from 'date-fns';
 import { Response, NextFunction } from 'express';
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 
 import { HTTPStatusCodes } from 'config/status-codes';
 import { GroupLoggedInRequest } from 'controllers/group';
 import { ScheduleDateService } from 'controllers/scheduleDate';
 import { ApiError } from 'middleware/error';
 import ChoreModel from 'models/chore.model';
+import UserGroupModel from 'models/user-group.model';
 import ScheduleModel, { ScheduleCreateParams } from 'models/schedule.model';
 
 import ScheduleService from './schedule.service';
@@ -20,8 +21,7 @@ class ScheduleController {
       const { dateFrom, dateTo, name } = req.query;
 
       // The end date of the repeating elements of the schedule is in the range from dateFrom to dateTo
-      const filterParams = {
-        groupId,
+      const filterParams: WhereOptions = {
         dateEnd: dateFrom && dateTo ? { [Op.between]: [dateFrom, dateTo] } : undefined,
       };
 
@@ -29,25 +29,40 @@ class ScheduleController {
         delete filterParams.dateEnd;
       }
 
-      const choreNamesSearch = name ? [{ model: ChoreModel, attributes: ['name'] }] : [];
+      const attributes = ['groupId'];
+      if (name) {
+        attributes.push('name');
+      }
+
+      const choreNamesSearch = [{ model: ChoreModel, attributes }];
 
       // Search schedules in group by chore name and filter by end date
-      const schedulesWithChoreName = await ScheduleModel.findAll({
+      const schedules = await ScheduleModel.findAll({
         where: filterParams,
         include: choreNamesSearch,
       });
 
-      console.log('schedulesWithChoreName', schedulesWithChoreName.length, schedulesWithChoreName);
+      console.log('schedulesWithChoreName', schedules.length);
 
-      if (!schedulesWithChoreName) {
+      const schedulesWithChoreName = name
+        ? schedules.filter((schedule) => schedule.chore.name.includes(name))
+        : schedules;
+
+      if (
+        !schedulesWithChoreName ||
+        !schedulesWithChoreName.every((s) => s.chore?.groupId === groupId)
+      ) {
         return next(ApiError.badRequest('Расписание задач по такому запросу не найдено'));
       }
 
+      if (!schedulesWithChoreName.length) {
+        return res.status(HTTPStatusCodes.OK).json([]);
+      }
+
       // Take all scheduled tasks from found schedules
-      const scheduleDates = await ScheduleDateService.getScheduleDates(
-        { scheduleIds: schedulesWithChoreName.map((schedule) => schedule.id) },
-        next
-      );
+      const scheduleDates = await ScheduleDateService.getScheduleDates({
+        scheduleIds: schedulesWithChoreName.map((schedule) => schedule.id),
+      });
 
       res.status(HTTPStatusCodes.OK).json(scheduleDates);
     } catch (err) {
@@ -68,18 +83,30 @@ class ScheduleController {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      if (!createdBy) {
+      if (!(choreId && dateStart && userGroupIds)) {
+        return next(ApiError.badRequest('Не переданы обязательные параметры'));
+      }
+
+      const createdByUserGroup = await UserGroupModel.findOne({ where: { userId: createdBy } });
+
+      if (!createdByUserGroup) {
         return next(ApiError.badRequest('Не передан id создателя'));
+      }
+
+      const choreExists = await ChoreModel.findOne({ where: { id: choreId, groupId } });
+
+      if (!choreExists) {
+        return next(ApiError.badRequest('Задача не найдена'));
       }
 
       const createParams: ScheduleCreateParams = {
         choreId,
-        dateStart: new Date(dateStart),
-        dateEnd: new Date(dateEnd || dateStart),
+        dateStart: new Date(new Date(dateStart).setHours(23, 59, 59)),
+        dateEnd: new Date(new Date(dateEnd || dateStart).setHours(23, 59, 59)),
         frequency,
         alternatingMethod,
         userGroupIds,
-        createdBy,
+        createdBy: createdByUserGroup.id,
       };
 
       await ScheduleService.checkIfUsersInGroup(userGroupIds, groupId, next);
@@ -100,7 +127,7 @@ class ScheduleController {
       }
 
       // todo: implement anyone alternating method
-      if (alternatingMethod && alternatingMethod !== 'anyone') {
+      if (alternatingMethod && alternatingMethod === 'anyone') {
         return next(ApiError.badRequest('Данный метод чередования пока не поддерживается'));
       }
 
@@ -147,19 +174,20 @@ class ScheduleController {
         return next(ApiError.badRequest('Расписание не найдено'));
       }
 
+      if (schedule.isArchived) {
+        return next(ApiError.badRequest('Расписание архивировано и не может быть изменено'));
+      }
+
       console.log('dateEnd', dateEnd, new Date());
       if (dateEnd && new Date(dateEnd) < new Date()) {
         return next(ApiError.badRequest('Дата окончания не может быть меньше текущей даты'));
       }
 
       // Get all scheduled tasks for this schedule from today
-      const scheduleDates = await ScheduleDateService.getScheduleDates(
-        {
-          scheduleIds: [schedule.id],
-          onlyFromToday: true,
-        },
-        next
-      );
+      const scheduleDates = await ScheduleDateService.getScheduleDates({
+        scheduleIds: [schedule.id],
+        onlyFromToday: true,
+      });
 
       if (!scheduleDates) {
         return next(ApiError.badRequest('Не удалось найти запланированные задачи'));
@@ -201,7 +229,8 @@ class ScheduleController {
     }
   };
 
-  // DELETE /api/schedule/schedule/:id
+  // PUT /api/schedule/schedule/:id
+  /** Delete all not completed scheduled task from today and archives schedule */
   deleteSchedule = async (req: GroupLoggedInRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
@@ -222,36 +251,12 @@ class ScheduleController {
         return next(ApiError.badRequest('Расписание не найдено'));
       }
 
-      // todo: check initial schedule dates
-      const initialScheduleDates = await ScheduleDateService.getScheduleDates(
-        {
-          scheduleIds: [schedule.id],
-        },
-        next
-      );
-      console.log('deleteSchedule initialScheduleDates', initialScheduleDates?.length);
-
-      await schedule.destroy();
-
-      // todo: check schedule dates after deletion
-      const scheduleDates = await ScheduleDateService.getScheduleDates(
-        {
-          scheduleIds: [schedule.id],
-        },
-        next
-      );
-      console.log('deleteSchedule initial scheduleDates', scheduleDates?.length);
-
-      if (initialScheduleDates?.length !== scheduleDates?.length) {
-        return next(
-          ApiError.badRequest('При удалении расписания были удалены запланированные задачи')
-        );
-      }
+      const scheduleDates = await ScheduleDateService.getScheduleDates({
+        scheduleIds: [schedule.id],
+      });
 
       if (!scheduleDates) {
-        console.error('no scheduleDates');
-
-        return;
+        return next(ApiError.badRequest('Не удалось найти запланированные задачи'));
       }
 
       // Delete all not completed schedule dates from today
@@ -264,10 +269,44 @@ class ScheduleController {
         }
       }
 
-      res.status(HTTPStatusCodes.OK).json({ message: 'Расписание успешно удалено' });
+      await ScheduleDateService.getScheduleDates({ scheduleIds: [schedule.id] });
+
+      await schedule.update({ isArchived: true });
+
+      res.status(HTTPStatusCodes.OK).json({ message: 'Расписание успешно архивировано' });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`deleteSchedule: ${err.message}`));
+      }
+    }
+  };
+
+  /** Delete schedule and ALL scheduled task */
+  deleteScheduleCascade = async (req: GroupLoggedInRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const groupId = req.currentGroup?.id;
+
+      if (!groupId) {
+        return next(ApiError.badRequest('Не передан id группы'));
+      }
+
+      // Seacrh schedule by its id with groupId column
+      const schedule = await ScheduleModel.findOne({
+        where: { id },
+        include: [{ model: ChoreModel, attributes: ['groupId'] }],
+      });
+
+      if (!schedule || schedule.chore.groupId !== groupId) {
+        return next(ApiError.badRequest('Расписание не найдено'));
+      }
+
+      await schedule.destroy();
+
+      res.status(HTTPStatusCodes.OK).json({ message: 'Расписание успешно удалено' });
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`deleteScheduleCascade: ${err.message}`));
       }
     }
   };

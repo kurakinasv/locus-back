@@ -19,18 +19,27 @@ class ScheduleDateController {
       }
 
       const scheduleDate = await ScheduleDateModel.findOne({ where: { id } });
-      console.log('editScheduleDate scheduleDate', scheduleDate);
+      console.log('editScheduleDate scheduleDate', scheduleDate?.id);
 
       if (!scheduleDate) {
         return next(ApiError.notFound('Запланированная задача не найдена'));
       }
 
-      if (completed !== undefined) {
-        scheduleDate.completed = completed;
-        scheduleDate.completedAt = completed ? new Date(completedAt) : null;
+      if ([completed, completedAt, isAssigned].every((v) => v === undefined)) {
+        return res.status(HTTPStatusCodes.NOT_MODIFIED).json();
       }
 
-      if (isAssigned) {
+      if (completed !== undefined) {
+        scheduleDate.completed = completed;
+        scheduleDate.completedAt =
+          completedAt === null
+            ? null
+            : completedAt === undefined
+              ? new Date()
+              : new Date(completedAt);
+      }
+
+      if (isAssigned !== undefined) {
         scheduleDate.isAssigned = isAssigned;
       }
 

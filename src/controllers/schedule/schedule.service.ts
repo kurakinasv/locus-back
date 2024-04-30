@@ -43,8 +43,6 @@ class ScheduleService {
       where: { groupId, id: userGroupIds },
     });
 
-    console.log('usersInGroup', foundUsersInGroup.length, foundUsersInGroup);
-
     if (foundUsersInGroup.length !== userGroupIds.length) {
       return next(ApiError.badRequest('Пользователи не найдены в группе'));
     }

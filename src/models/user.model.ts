@@ -13,7 +13,6 @@ import UserGroup from './user-group.model';
 class User extends Model {
   @Column({
     primaryKey: true,
-    // autoIncrement: true, // puts an error
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
   })

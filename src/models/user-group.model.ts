@@ -17,8 +17,8 @@ type UserGroupModel = {
 };
 
 export type UserGroupCreateParams = {
-  debtAmount: number;
-  isAdmin: boolean;
+  debtAmount?: number;
+  isAdmin?: boolean;
   isLoggedIn: boolean;
   userId: UUIDString;
   groupId: UUIDString;

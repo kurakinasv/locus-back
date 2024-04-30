@@ -22,35 +22,14 @@ export interface ScheduleDateEditParams {
 }
 
 export interface ScheduleDateEditRequest extends GroupLoggedInRequest {
-  body:
-    | {
-        /** Whether user mark this task as completed or not */
-        completed: true;
+  body: {
+    /** Whether user mark this task as completed or not */
+    completed?: boolean;
 
-        /** Date and time when this task was completed */
-        completedAt: DateString;
+    /** Date and time when this task was completed */
+    completedAt?: DateString | null;
 
-        /** Is this task assigned to a specific user */
-        isAssigned?: ScheduleDateModel['isAssigned'];
-      }
-    | {
-        /** Whether user mark this task as completed or not */
-        completed: false;
-
-        /** Date and time when this task was completed */
-        completedAt: null;
-
-        /** Is this task assigned to a specific user */
-        isAssigned?: ScheduleDateModel['isAssigned'];
-      }
-    | {
-        /** Whether user mark this task as completed or not */
-        completed: undefined;
-
-        /** Date and time when this task was completed */
-        completedAt: undefined;
-
-        /** Is this task assigned to a specific user */
-        isAssigned?: ScheduleDateModel['isAssigned'];
-      };
+    /** Is this task assigned to a specific user */
+    isAssigned?: ScheduleDateModel['isAssigned'];
+  };
 }
