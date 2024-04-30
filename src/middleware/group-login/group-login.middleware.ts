@@ -1,10 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 
+import { AuthUserRequest } from 'controllers/auth';
 import type { GroupLoggedInRequest } from 'controllers/group/types';
 import { ApiError } from 'middleware/error';
+import UserGroupModel from 'models/user-group.model';
 import { getCookieByName } from 'utils/cookies';
 
-const groupLoginMiddleware = (req: Request, res: Response, next: NextFunction) => {
+const groupLoginMiddleware = async (req: AuthUserRequest, res: Response, next: NextFunction) => {
   if (req.method === 'OPTIONS') {
     return next();
   }
@@ -20,6 +22,16 @@ const groupLoginMiddleware = (req: Request, res: Response, next: NextFunction) =
 
     if (!currentGroupId) {
       return next(ApiError.badRequest('Не выполнен вход ни в одну группу'));
+    }
+
+    const userId = req.user?.id;
+
+    const userInGroup = await UserGroupModel.findOne({
+      where: { userId, groupId: currentGroupId },
+    });
+
+    if (!userInGroup) {
+      return next(ApiError.forbidden('Пользователь не состоит в группе'));
     }
 
     (req as GroupLoggedInRequest).currentGroup = { id: currentGroupId };

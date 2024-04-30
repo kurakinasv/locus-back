@@ -1,9 +1,18 @@
-import { Column, DataType, Table, Model, BelongsTo, ForeignKey } from 'sequelize-typescript';
+import {
+  Column,
+  DataType,
+  Table,
+  Model,
+  BelongsTo,
+  ForeignKey,
+  HasMany,
+} from 'sequelize-typescript';
 
 import { UUIDString, DefaultId } from 'typings/common';
 
 import Group from './group.model';
 import ChoreCategory from './choreCategory.model';
+import Schedule from './schedule.model';
 
 @Table({
   modelName: 'Chore',
@@ -42,6 +51,9 @@ class Chore extends Model {
 
   @BelongsTo(() => ChoreCategory, 'categoryId')
   declare category: ChoreCategory;
+
+  @HasMany(() => Schedule, 'choreId')
+  declare schedules: Schedule[];
 }
 
 export default Chore;

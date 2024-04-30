@@ -1,15 +1,34 @@
-import { Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript';
 
 import { UUIDString } from 'typings/common';
 
 import User from './user.model';
 import Group from './group.model';
+import Schedule from './schedule.model';
+import ScheduleDate from './scheduleDate.model';
+
+type UserGroupModel = {
+  id: UUIDString;
+  debtAmount: number;
+  isAdmin: boolean;
+  isLoggedIn: boolean;
+  userId: UUIDString;
+  groupId: UUIDString;
+};
+
+export type UserGroupCreateParams = {
+  debtAmount: number;
+  isAdmin: boolean;
+  isLoggedIn: boolean;
+  userId: UUIDString;
+  groupId: UUIDString;
+};
 
 @Table({
   modelName: 'UserGroup',
   tableName: 'user_group',
 })
-class UserGroup extends Model {
+class UserGroup extends Model<UserGroupModel, UserGroupCreateParams> {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -51,6 +70,12 @@ class UserGroup extends Model {
     defaultValue: false,
   })
   declare isLoggedIn: boolean;
+
+  @HasMany(() => Schedule, 'createdBy')
+  declare schedules: Schedule[];
+
+  @HasMany(() => ScheduleDate, 'userGroupId')
+  declare scheduleDates: ScheduleDate[];
 }
 
 export default UserGroup;

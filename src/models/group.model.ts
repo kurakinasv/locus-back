@@ -37,7 +37,7 @@ class Group extends Model {
   @HasMany(() => Chore, 'groupId')
   declare chores: Chore[];
 
-  @HasMany(() => Chore, 'groupId')
+  @HasMany(() => ChoreCategory, 'groupId')
   declare choreCategories: ChoreCategory[];
 }
 
