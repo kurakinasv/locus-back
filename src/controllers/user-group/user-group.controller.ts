@@ -1,11 +1,12 @@
 import { Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
+import { loginToGroup } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
 import UserGroupModel from 'models/user-group.model';
+import { UUIDString } from 'typings/common';
 
 import { UserGroupEditRequest, UserGroupJoinRequest, UserGroupLeaveRequest } from './types';
-import { DefaultId } from 'typings/common';
 
 class UserGroupController {
   // POST /api/user-group/join
@@ -28,12 +29,40 @@ class UserGroupController {
         return next(ApiError.badRequest('Пользователь уже состоит в группе'));
       }
 
-      await UserGroupModel.create({ userId, groupId });
+      await UserGroupModel.create({ userId, groupId, isLoggedIn: true });
+
+      loginToGroup(res, groupId);
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Пользователь добавлен в группу' });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`joinGroup: ${err.message}`));
+      }
+    }
+  };
+
+  // PUT /api/user-group/login
+  loginToGroup = async (req: UserGroupJoinRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.id;
+      const groupId = req.body?.groupId;
+
+      if (!userId || !groupId) {
+        return next(ApiError.badRequest('Не переданы данные'));
+      }
+
+      if (!(await this._isUserExistInGroup(userId, groupId))) {
+        return next(ApiError.badRequest('Пользователь не найден в группе'));
+      }
+
+      await UserGroupModel.update({ isLoggedIn: true }, { where: { userId, groupId } });
+
+      loginToGroup(res, groupId);
+
+      res.status(HTTPStatusCodes.OK).json({ message: 'Пользователь вошел в группу' });
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`loginToGroup: ${err.message}`));
       }
     }
   };
@@ -91,7 +120,7 @@ class UserGroupController {
     }
   };
 
-  private _isUserExistInGroup = async (userId: DefaultId, groupId: DefaultId) => {
+  private _isUserExistInGroup = async (userId: UUIDString, groupId: UUIDString) => {
     const isExist = await UserGroupModel.findOne({ where: { userId, groupId } });
     return !!isExist;
   };

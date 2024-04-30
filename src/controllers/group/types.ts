@@ -1,10 +1,16 @@
 import { AuthUserRequest } from 'controllers/auth';
 import Group from 'models/group.model';
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
+
+export interface GroupLoggedInRequest extends AuthUserRequest {
+  currentGroup?: {
+    id: UUIDString;
+  };
+}
 
 export interface GroupGetRequest extends AuthUserRequest {
   body: {
-    id: DefaultId;
+    id: UUIDString;
   };
 }
 
@@ -17,7 +23,7 @@ export interface GroupCreateRequest extends AuthUserRequest {
 
 export interface GroupEditRequest extends AuthUserRequest {
   body: {
-    id: DefaultId;
+    id: UUIDString;
     name?: Group['name'];
     image?: Group['image'];
   };
@@ -25,6 +31,6 @@ export interface GroupEditRequest extends AuthUserRequest {
 
 export interface GroupDeleteRequest extends AuthUserRequest {
   body: {
-    id: DefaultId;
+    id: UUIDString;
   };
 }

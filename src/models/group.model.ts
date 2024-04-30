@@ -1,9 +1,11 @@
-import { BelongsToMany, Column, DataType, Model, Table } from 'sequelize-typescript';
+import { BelongsToMany, Column, DataType, HasMany, Model, Table } from 'sequelize-typescript';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 import UserGroup from './user-group.model';
 import User from './user.model';
+import Chore from './chore.model';
+import ChoreCategory from './choreCategory.model';
 
 @Table({
   modelName: 'Group',
@@ -15,7 +17,7 @@ class Group extends Model {
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
   })
-  declare id: DefaultId;
+  declare id: UUIDString;
 
   @Column({
     type: DataType.STRING,
@@ -31,6 +33,12 @@ class Group extends Model {
 
   @BelongsToMany(() => User, () => UserGroup)
   declare users: Array<User & { UserGroup: UserGroup }>;
+
+  @HasMany(() => Chore, 'groupId')
+  declare chores: Chore[];
+
+  @HasMany(() => Chore, 'groupId')
+  declare choreCategories: ChoreCategory[];
 }
 
 export default Group;

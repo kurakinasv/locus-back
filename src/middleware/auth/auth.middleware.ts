@@ -10,7 +10,7 @@ const authMiddleware = (req: Request | AuthUserRequest, res: Response, next: Nex
   }
 
   try {
-    const jwtPayload = checkSession(req, res, next);
+    const jwtPayload = checkSession(req, res);
 
     if (!jwtPayload || !jwtPayload.user?.id || !jwtPayload?.exp) {
       return next(ApiError.unauthorized('Пользователь не авторизован'));

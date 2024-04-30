@@ -8,5 +8,6 @@ declare namespace NodeJS {
     DB_PORT: string;
     JWT_SECRET: string;
     AUTH_COOKIE_NAME: string;
+    GROUP_COOKIE_NAME: string;
   }
 }

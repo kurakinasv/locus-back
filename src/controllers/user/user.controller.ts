@@ -69,7 +69,7 @@ class UserController {
       // todo: add password change
 
       if (!user.changed('email') && !user.changed('name') && !user.changed('surname')) {
-        return res.status(HTTPStatusCodes.OK).send();
+        return res.status(HTTPStatusCodes.OK).json();
       }
 
       await user.save();

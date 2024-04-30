@@ -3,10 +3,10 @@ import { HTTPStatusCodes } from 'config/status-codes';
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 
-import { removeSessionToken } from 'infrastructure/session';
+import { loginToGroup, logoutFromGroup, removeSessionToken } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
 import UserModel from 'models/user.model.js';
-
+import UserGroupModel from 'models/user-group.model';
 import { isRequiredString } from 'utils/helpers';
 
 import { createToken } from './auth.service';
@@ -61,10 +61,21 @@ class AuthController {
         return next(ApiError.notFound('Пользователь не найден'));
       }
 
+      // just in case
+      logoutFromGroup(res);
+
       const token = createToken(res, user.id);
 
       if (!token) {
         return next(ApiError.internal('Произошла ошибка при создании сессии'));
+      }
+
+      const loggedGroup = await UserGroupModel.findOne({
+        where: { userId: user.id, isLoggedIn: true },
+      });
+
+      if (loggedGroup) {
+        loginToGroup(res, loggedGroup.groupId);
       }
 
       return res.status(HTTPStatusCodes.OK).json(user);
@@ -126,6 +137,9 @@ class AuthController {
       if (!token) {
         return next(ApiError.internal('Произошла ошибка при создании сессии'));
       }
+
+      // just in case
+      logoutFromGroup(res);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: hashPassword, ...restUser } = user.get();

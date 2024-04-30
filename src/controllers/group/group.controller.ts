@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
+import { logoutFromGroup } from 'infrastructure/session';
 import GroupModel from 'models/group.model';
 import UserGroupModel from 'models/user-group.model';
 import { ApiError } from 'middleware/error';
@@ -68,7 +69,12 @@ class GroupController {
         return next(ApiError.internal('Произошла ошибка при создании группы'));
       }
 
-      const userInGroup = await UserGroupModel.create({ groupId: group.id, userId, isAdmin: true });
+      const userInGroup = await UserGroupModel.create({
+        groupId: group.id,
+        userId,
+        isAdmin: true,
+        isLoggedIn: true,
+      });
 
       if (!userInGroup) {
         next(ApiError.internal('Ошибка при добавлении пользователя в группу'));
@@ -93,8 +99,8 @@ class GroupController {
         return next(ApiError.badRequest('Группа не найдена'));
       }
 
-      group.name = name !== undefined ? name : group.name;
-      group.image = image !== undefined ? image : group.image;
+      group.name = name ?? group.name;
+      group.image = image ?? group.image;
 
       await group.save();
 
@@ -122,6 +128,8 @@ class GroupController {
       }
 
       // todo: delete all users in group
+
+      logoutFromGroup(res);
 
       await group.destroy();
 

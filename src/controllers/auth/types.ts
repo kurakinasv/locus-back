@@ -2,11 +2,11 @@ import { Request } from 'express';
 
 import User from 'models/user.model';
 
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 export interface AuthUserRequest extends Request {
   user?: {
-    id: DefaultId;
+    id: UUIDString;
   };
 }
 

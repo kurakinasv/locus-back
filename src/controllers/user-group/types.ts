@@ -1,16 +1,16 @@
 import { AuthUserRequest } from 'controllers/auth';
 import UserGroupModel from 'models/user-group.model';
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 export interface UserGroupJoinRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
   };
 }
 
 export interface UserGroupEditRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
     isAdmin?: UserGroupModel['isAdmin'];
     debtAmount?: UserGroupModel['debtAmount'];
   };
@@ -18,6 +18,6 @@ export interface UserGroupEditRequest extends AuthUserRequest {
 
 export interface UserGroupLeaveRequest extends AuthUserRequest {
   body: {
-    groupId: DefaultId;
+    groupId: UUIDString;
   };
 }

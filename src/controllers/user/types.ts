@@ -1,10 +1,10 @@
 import { AuthUserRequest } from 'controllers/auth';
 import User from 'models/user.model';
-import { DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 export interface UserEditRequest extends AuthUserRequest {
   body: {
-    id: DefaultId;
+    id: UUIDString;
     name?: User['name'];
     surname?: User['surname'];
     email?: User['email'];
@@ -14,6 +14,6 @@ export interface UserEditRequest extends AuthUserRequest {
 
 export interface UserDeleteRequest extends AuthUserRequest {
   body: {
-    id: DefaultId;
+    id: UUIDString;
   };
 }
