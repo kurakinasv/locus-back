@@ -8,6 +8,7 @@ import Chore from './chore.model';
 import ChoreCategory from './choreCategory.model';
 import ExpenseCategory from './expenseCategory.model';
 import Expense from './expense.model';
+import ShoppingList from './shoppingList.model';
 
 type GroupModel = {
   id: UUIDString;
@@ -58,6 +59,9 @@ class Group extends Model<GroupModel, GroupCreateParams> {
 
   @HasMany(() => Expense, 'groupId')
   declare expenses: Expense[];
+
+  @HasMany(() => ShoppingList, 'groupId')
+  declare shoppingLists: ShoppingList[];
 }
 
 export default Group;
