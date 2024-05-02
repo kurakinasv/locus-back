@@ -5,6 +5,8 @@ import choreRouter from './chore.router';
 import choreCategoryRouter from './choreCategory.router';
 import echoRouter from './echo.router';
 import groupRouter from './group.router';
+import scheduleRouter from './schedule.router';
+import scheduleDateRouter from './scheduleDate.router';
 import userRouter from './user.router';
 import userGroupRouter from './user-group.router';
 
@@ -18,6 +20,8 @@ const initRoutes = (app: Express) => {
   router.use('/user-group', userGroupRouter);
   router.use('/chore', choreRouter);
   router.use('/chore', choreCategoryRouter);
+  router.use('/schedule', scheduleRouter);
+  router.use('/schedule', scheduleDateRouter);
 
   app.use('/api', router);
 };

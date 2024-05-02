@@ -8,7 +8,7 @@ import {
   ForeignKey,
 } from 'sequelize-typescript';
 
-import { UUIDString, DefaultId } from 'typings/common';
+import { UUIDString } from 'typings/common';
 
 import Chore from './chore.model';
 import Group from './group.model';
