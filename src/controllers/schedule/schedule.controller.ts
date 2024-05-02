@@ -12,6 +12,7 @@ import ScheduleModel, { ScheduleCreateParams } from 'models/schedule.model';
 
 import ScheduleService from './schedule.service';
 import { ScheduleCreateRequest, ScheduleEditRequest, SchedulesGetRequest } from './types';
+import { setEndOfDay } from 'utils/date';
 
 class ScheduleController {
   // GET /api/schedule/schedules
@@ -101,8 +102,8 @@ class ScheduleController {
 
       const createParams: ScheduleCreateParams = {
         choreId,
-        dateStart: new Date(new Date(dateStart).setHours(23, 59, 59)),
-        dateEnd: new Date(new Date(dateEnd || dateStart).setHours(23, 59, 59)),
+        dateStart: setEndOfDay(dateStart),
+        dateEnd: setEndOfDay(dateEnd || dateStart),
         frequency,
         alternatingMethod,
         userGroupIds,

@@ -1,4 +1,12 @@
-import { Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript';
+import {
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
 import { UUIDString } from 'typings/common';
 
@@ -6,6 +14,8 @@ import User from './user.model';
 import Group from './group.model';
 import Schedule from './schedule.model';
 import ScheduleDate from './scheduleDate.model';
+import Expense from './expense.model';
+import UserExpense from './user-expense.model';
 
 type UserGroupModel = {
   id: UUIDString;
@@ -51,7 +61,7 @@ class UserGroup extends Model<UserGroupModel, UserGroupCreateParams> {
   declare groupId: UUIDString;
 
   @Column({
-    type: DataType.DECIMAL,
+    type: DataType.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0,
   })
@@ -76,6 +86,9 @@ class UserGroup extends Model<UserGroupModel, UserGroupCreateParams> {
 
   @HasMany(() => ScheduleDate, 'userGroupId')
   declare scheduleDates: ScheduleDate[];
+
+  @BelongsToMany(() => Expense, () => UserExpense)
+  declare expenses: Array<Expense & { UserExpense: UserExpense }>;
 }
 
 export default UserGroup;

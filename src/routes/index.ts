@@ -4,11 +4,14 @@ import authRouter from './auth.router';
 import choreRouter from './chore.router';
 import choreCategoryRouter from './choreCategory.router';
 import echoRouter from './echo.router';
+import expenseRouter from './expense.router';
+import expenseCategoryRouter from './expenseCategory.router';
 import groupRouter from './group.router';
 import scheduleRouter from './schedule.router';
 import scheduleDateRouter from './scheduleDate.router';
 import userRouter from './user.router';
 import userGroupRouter from './user-group.router';
+import userExpenseRouter from './user-expense.router';
 
 const router = Router();
 
@@ -22,6 +25,9 @@ const initRoutes = (app: Express) => {
   router.use('/chore', choreCategoryRouter);
   router.use('/schedule', scheduleRouter);
   router.use('/schedule', scheduleDateRouter);
+  router.use('/expense', expenseRouter);
+  router.use('/expense', expenseCategoryRouter);
+  router.use('/user-expense', userExpenseRouter);
 
   app.use('/api', router);
 };

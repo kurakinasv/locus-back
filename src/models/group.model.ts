@@ -6,12 +6,25 @@ import UserGroup from './user-group.model';
 import User from './user.model';
 import Chore from './chore.model';
 import ChoreCategory from './choreCategory.model';
+import ExpenseCategory from './expenseCategory.model';
+import Expense from './expense.model';
+
+type GroupModel = {
+  id: UUIDString;
+  name: string;
+  image?: string | null;
+};
+
+export type GroupCreateParams = {
+  name: string;
+  image?: string;
+};
 
 @Table({
   modelName: 'Group',
   tableName: 'group',
 })
-class Group extends Model {
+class Group extends Model<GroupModel, GroupCreateParams> {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
@@ -39,6 +52,12 @@ class Group extends Model {
 
   @HasMany(() => ChoreCategory, 'groupId')
   declare choreCategories: ChoreCategory[];
+
+  @HasMany(() => ExpenseCategory, 'groupId')
+  declare expenseCategory: ExpenseCategory[];
+
+  @HasMany(() => Expense, 'groupId')
+  declare expenses: Expense[];
 }
 
 export default Group;

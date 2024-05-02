@@ -1,5 +1,5 @@
 import { AuthUserRequest } from 'controllers/auth';
-import Group from 'models/group.model';
+import Group, { GroupCreateParams } from 'models/group.model';
 import { UUIDString } from 'typings/common';
 
 export interface GroupLoggedInRequest extends AuthUserRequest {
@@ -15,10 +15,7 @@ export interface GroupGetRequest extends AuthUserRequest {
 }
 
 export interface GroupCreateRequest extends AuthUserRequest {
-  body: {
-    name: Group['name'];
-    image?: Group['image'];
-  };
+  body: GroupCreateParams;
 }
 
 export interface GroupEditRequest extends AuthUserRequest {
