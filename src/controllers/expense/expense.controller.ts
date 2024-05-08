@@ -38,8 +38,16 @@ class ExpenseController {
   // POST /api/expense/expense
   createExpense = async (req: ExpenseCreateRequest, res: Response, next: NextFunction) => {
     try {
-      const { amount, categoryId, currency, purchaseDate, description, splitMethod, userGroupIds } =
-        req.body;
+      const {
+        name,
+        amount,
+        categoryId,
+        currency,
+        purchaseDate,
+        description,
+        splitMethod,
+        userGroupIds,
+      } = req.body;
       const groupId = req.currentGroup?.id;
       const createdBy = req.user?.id;
 
@@ -49,6 +57,12 @@ class ExpenseController {
 
       if (!groupId) {
         return next(ApiError.badRequest('Не передан id группы'));
+      }
+
+      const trimmedName = name?.trim();
+
+      if (!trimmedName) {
+        return next(ApiError.badRequest('Название не может быть пустым'));
       }
 
       if (amount <= 0) {
@@ -85,6 +99,7 @@ class ExpenseController {
       }
 
       const expense = await ExpenseModel.create({
+        name: trimmedName,
         amount,
         categoryId,
         groupId,
@@ -110,7 +125,7 @@ class ExpenseController {
   editExpense = async (req: ExpenseEditRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { amount, categoryId, description, purchaseDate } = req.body;
+      const { name, amount, categoryId, description, purchaseDate } = req.body;
       const groupId = req.currentGroup?.id;
 
       if (!groupId) {
@@ -123,12 +138,19 @@ class ExpenseController {
         return next(ApiError.badRequest('Запись о расходах не найдена'));
       }
 
-      const editParams = {
+      const trimmedName = name?.trim();
+
+      const editParams: Partial<ExpenseModel> = {
+        name: trimmedName,
         amount,
         categoryId,
         description,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
       };
+
+      if (typeof name === 'string' && !trimmedName) {
+        editParams.name = expense.name;
+      }
 
       if (description !== undefined) {
         const trimmedDescription = description?.trim();

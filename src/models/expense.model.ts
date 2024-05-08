@@ -24,6 +24,7 @@ export type ExpenseStatus = 'pending' | 'settled';
 
 type ExpenseModel = {
   id: DefaultId;
+  name: string;
   amount: number;
   currency: string;
   description: string | null;
@@ -36,6 +37,7 @@ type ExpenseModel = {
 };
 
 export type ExpenseCreateParams = {
+  name: string;
   amount: number;
   currency: string;
   description?: string | null;
@@ -57,6 +59,12 @@ class Expense extends Model<ExpenseModel, ExpenseCreateParams> {
     autoIncrement: true,
   })
   declare id: DefaultId;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  declare name: string;
 
   @Column({
     type: DataType.DECIMAL(10, 2),

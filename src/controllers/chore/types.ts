@@ -27,6 +27,7 @@ export interface ChoreEditRequest extends GroupLoggedInRequest {
     categoryId?: DefaultId;
     name?: ChoreModel['name'];
     points?: ChoreModel['points'];
+    isArchived?: ChoreModel['isArchived'];
   };
   params: {
     id: NumberString;

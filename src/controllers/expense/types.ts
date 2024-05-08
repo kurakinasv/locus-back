@@ -13,6 +13,7 @@ export interface ExpenseCreateRequest extends GroupLoggedInRequest {
 
 export interface ExpenseEditRequest extends GroupLoggedInRequest {
   body: {
+    name?: ExpenseModel['name'];
     amount?: ExpenseModel['amount'];
     description?: ExpenseModel['description'];
     purchaseDate?: DateString;

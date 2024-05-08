@@ -99,7 +99,7 @@ class ChoreController {
   editChore = async (req: ChoreEditRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { name, points, categoryId } = req.body;
+      const { name, points, categoryId, isArchived } = req.body;
       const groupId = req.currentGroup?.id;
 
       if (!id) {
@@ -125,9 +125,12 @@ class ChoreController {
         }
       }
 
+      // todo: create new chore if there are/were scheduled tasks to save history
+
       chore.name = trimmedName ?? chore.name;
       chore.points = points ?? chore.points;
       chore.categoryId = categoryId ?? chore.categoryId;
+      chore.isArchived = isArchived ?? chore.isArchived;
 
       await chore.save();
 
