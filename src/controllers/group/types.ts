@@ -1,4 +1,5 @@
 import { AuthUserRequest } from 'controllers/auth';
+import { FileArray } from 'express-fileupload';
 import Group, { GroupCreateParams } from 'models/group.model';
 import { UUIDString } from 'typings/common';
 
@@ -9,7 +10,7 @@ export interface GroupLoggedInRequest extends AuthUserRequest {
 }
 
 export interface GroupGetRequest extends AuthUserRequest {
-  body: {
+  query: {
     id: UUIDString;
   };
 }
@@ -18,16 +19,10 @@ export interface GroupCreateRequest extends AuthUserRequest {
   body: GroupCreateParams;
 }
 
-export interface GroupEditRequest extends AuthUserRequest {
+export interface GroupEditRequest extends GroupLoggedInRequest {
   body: {
-    id: UUIDString;
     name?: Group['name'];
     image?: Group['image'];
   };
-}
-
-export interface GroupDeleteRequest extends AuthUserRequest {
-  body: {
-    id: UUIDString;
-  };
+  files?: FileArray | null;
 }
