@@ -11,22 +11,59 @@ import UserGroupModel from 'models/user-group.model';
 import ScheduleModel, { ScheduleCreateParams } from 'models/schedule.model';
 
 import ScheduleService from './schedule.service';
-import { ScheduleCreateRequest, ScheduleEditRequest, SchedulesGetRequest } from './types';
+import {
+  ScheduleCreateRequest,
+  ScheduleEditRequest,
+  ScheduleGetRequest,
+  SchedulesGetRequest,
+} from './types';
 import { setEndOfDay } from 'utils/date';
 
 class ScheduleController {
+  // GET /api/schedule/schedule
+  /** Get schedule by id */
+  getSchedule = async (req: ScheduleGetRequest, res: Response, next: NextFunction) => {
+    try {
+      const scheduleId = req.params.id;
+      const groupId = req.currentGroup?.id;
+
+      if (!scheduleId) {
+        return next(ApiError.badRequest('Не передан id расписания'));
+      }
+
+      const schedule = await ScheduleModel.findOne({
+        where: { id: scheduleId },
+        include: [{ model: ChoreModel, attributes: ['groupId'] }],
+      });
+
+      if (!schedule || schedule.chore.groupId !== groupId) {
+        return next(ApiError.notFound('Расписание не найдено'));
+      }
+
+      res.status(HTTPStatusCodes.OK).json(schedule);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getSchedule: ${err.message}`));
+      }
+    }
+  };
+
   // GET /api/schedule/schedules
+  /**
+   * @description Get all scheduled tasks for this group (with search and filter)
+   * @returns Created schedule and all the scheduled tasks in current group
+   * */
   getSchedules = async (req: SchedulesGetRequest, res: Response, next: NextFunction) => {
     try {
       const groupId = req.currentGroup?.id;
-      const { dateFrom, dateTo, name } = req.query;
+      const { from, to, name } = req.query;
 
       // The end date of the repeating elements of the schedule is in the range from dateFrom to dateTo
       const filterParams: WhereOptions = {
-        dateEnd: dateFrom && dateTo ? { [Op.between]: [dateFrom, dateTo] } : undefined,
+        dateEnd: from && to ? { [Op.between]: [from, setEndOfDay(to)] } : undefined,
       };
 
-      if (!dateFrom || !dateTo) {
+      if (!from || !to) {
         delete filterParams.dateEnd;
       }
 
@@ -43,11 +80,12 @@ class ScheduleController {
         include: choreNamesSearch,
       });
 
-      console.log('schedulesWithChoreName', schedules.length);
-
       const schedulesWithChoreName = name
-        ? schedules.filter((schedule) => schedule.chore.name.includes(name))
-        : schedules;
+        ? schedules.filter(
+            (schedule) =>
+              schedule.chore.groupId === groupId && schedule.chore.name.toLowerCase().includes(name)
+          )
+        : schedules.filter((schedule) => schedule.chore.groupId === groupId);
 
       if (
         !schedulesWithChoreName ||
@@ -110,7 +148,11 @@ class ScheduleController {
         createdBy: createdByUserGroup.id,
       };
 
-      await ScheduleService.checkIfUsersInGroup(userGroupIds, groupId, next);
+      const result = await ScheduleService.checkIfUsersInGroup(userGroupIds, groupId);
+
+      if (result !== true) {
+        return next(ApiError.badRequest(result.error));
+      }
 
       // If frequency is 'never', then dateStart and dateEnd should be equal
       if (frequency === 'never' && !dateEnd) {
@@ -139,13 +181,23 @@ class ScheduleController {
       }
 
       // Create schedule dates
-      const created = await ScheduleDateService.createScheduleDates(schedule, next);
+      const created = await ScheduleDateService.createScheduleDates(schedule);
 
       if (!created) {
         return next(ApiError.badRequest('Не удалось создать запланированные задачи'));
       }
 
-      res.status(HTTPStatusCodes.CREATED).json(schedule);
+      const schedules = await ScheduleModel.findAll({
+        include: [{ model: ChoreModel, attributes: ['groupId'] }],
+      });
+
+      const groupSchedules = schedules.filter((s) => s.chore.groupId === groupId);
+
+      const allScheduledTasks = await ScheduleDateService.getScheduleDates({
+        scheduleIds: groupSchedules.map((s) => s.id),
+      });
+
+      res.status(HTTPStatusCodes.CREATED).json({ schedule, tasks: allScheduledTasks });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`createSchedule: ${err.message}`));
@@ -216,7 +268,7 @@ class ScheduleController {
       }
 
       // Create new schedule dates from today (without editing completed tasks)
-      const edited = await ScheduleDateService.createScheduleDates(editedSchedule, next, true);
+      const edited = await ScheduleDateService.createScheduleDates(editedSchedule, true);
 
       if (!edited) {
         return next(ApiError.badRequest('Не удалось изменить расписание'));

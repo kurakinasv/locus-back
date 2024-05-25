@@ -3,12 +3,17 @@ import { Router } from 'express';
 import userGroupController from 'controllers/user-group';
 import { authMiddleware } from 'middleware/auth';
 
+import { authGroupLoginMiddleware } from './config';
+
 const router = Router();
 
 // /api/user-group
+router.get('/current', authMiddleware, userGroupController.getCurrentUserGroup);
+router.get('/user-groups', authMiddleware, userGroupController.getUserUserGroups);
+router.get('/group-members', authGroupLoginMiddleware, userGroupController.getGroupMembers);
 router.post('/join', authMiddleware, userGroupController.joinGroup);
 router.put('/login', authMiddleware, userGroupController.loginToGroup);
-router.put('/edit', authMiddleware, userGroupController.editUserGroup);
-router.delete('/leave', authMiddleware, userGroupController.leaveGroup);
+router.put('/edit', authGroupLoginMiddleware, userGroupController.editUserGroup);
+router.delete('/leave', authGroupLoginMiddleware, userGroupController.leaveGroup);
 
 export default router;

@@ -8,6 +8,7 @@ const router = Router();
 
 // /api/expense
 router.get('/expenses', authGroupLoginMiddleware, expenseController.getExpenses);
+router.get('/expense/:id', authGroupLoginMiddleware, expenseController.getExpense);
 router.post('/expense', authGroupLoginMiddleware, expenseController.createExpense);
 router.put('/expense/:id', authGroupLoginMiddleware, expenseController.editExpense);
 router.delete('/expense/:id', authGroupLoginMiddleware, expenseController.deleteExpense);

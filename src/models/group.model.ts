@@ -13,12 +13,13 @@ import ShoppingList from './shoppingList.model';
 type GroupModel = {
   id: UUIDString;
   name: string;
-  image?: string | null;
+  image: string | null;
+  inviteCode: UUIDString | null;
+  inviteExpiresAt: Date | null;
 };
 
 export type GroupCreateParams = {
   name: string;
-  image?: string;
 };
 
 @Table({
@@ -43,7 +44,19 @@ class Group extends Model<GroupModel, GroupCreateParams> {
     type: DataType.STRING,
     defaultValue: null,
   })
-  declare image?: string | null;
+  declare image: string | null;
+
+  @Column({
+    type: DataType.STRING,
+    defaultValue: null,
+  })
+  declare inviteCode: string | null;
+
+  @Column({
+    type: DataType.DATE,
+    defaultValue: null,
+  })
+  declare inviteExpiresAt: Date | null;
 
   @BelongsToMany(() => User, () => UserGroup)
   declare users: Array<User & { UserGroup: UserGroup }>;

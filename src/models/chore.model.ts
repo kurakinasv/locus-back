@@ -18,6 +18,7 @@ type ChoreModel = {
   id: DefaultId;
   name: string;
   points: number;
+  isArchived: boolean;
   categoryId: ChoreCategory['id'];
   groupId: Group['id'];
 };
@@ -67,6 +68,13 @@ class Chore extends Model<ChoreModel, ChoreCreateParams> {
     defaultValue: 0,
   })
   declare points: number;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  })
+  declare isArchived: boolean;
 
   @BelongsTo(() => Group, 'groupId')
   declare group: Group;

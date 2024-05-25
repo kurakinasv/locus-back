@@ -78,7 +78,10 @@ class AuthController {
         loginToGroup(res, loggedGroup.groupId);
       }
 
-      return res.status(HTTPStatusCodes.OK).json(user);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: hashPassword, ...restUser } = user.get();
+
+      return res.status(HTTPStatusCodes.OK).json(restUser);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`login: ${err.message}`));
@@ -110,7 +113,7 @@ class AuthController {
       const isExist = await UserModel.findOne({ where: { email: trimmedEmail } });
 
       if (isExist) {
-        next(ApiError.badRequest('Такой пользователь уже существует'));
+        return next(ApiError.badRequest('Такой пользователь уже существует'));
       }
 
       const hash = await bcrypt.hash(password, 5);
@@ -157,7 +160,7 @@ class AuthController {
     try {
       removeSessionToken(res);
 
-      return res.status(HTTPStatusCodes.OK).json('Успешно выполнен выход из аккаунта');
+      return res.status(HTTPStatusCodes.OK).json({ message: 'Успешно выполнен выход из аккаунта' });
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`logout: ${err.message}`));

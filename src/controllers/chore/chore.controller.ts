@@ -6,11 +6,17 @@ import ChoreModel from 'models/chore.model';
 import ChoreCategoryModel from 'models/choreCategory.model';
 import UserGroupModel from 'models/user-group.model';
 
-import { ChoreCreateRequest, ChoreDeleteRequest, ChoreEditRequest, ChoreGetRequest } from './types';
+import {
+  ChoreCreateRequest,
+  ChoreDeleteRequest,
+  ChoreEditRequest,
+  ChoreGetRequest,
+  ChoresGetRequest,
+} from './types';
 
 class ChoreController {
   // GET /api/chore/chores
-  getChores = async (req: ChoreGetRequest, res: Response, next: NextFunction) => {
+  getChores = async (req: ChoresGetRequest, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
       const groupId = req.currentGroup?.id;
@@ -52,6 +58,30 @@ class ChoreController {
     }
   };
 
+  // GET /api/chore/chore/:id
+  getChore = async (req: ChoreGetRequest, res: Response, next: NextFunction) => {
+    try {
+      const choreId = req.params.id;
+      const groupId = req.currentGroup?.id;
+
+      if (!groupId || !choreId) {
+        return next(ApiError.badRequest('Не передан id группы или задачи'));
+      }
+
+      const chore = await ChoreModel.findOne({ where: { id: Number(choreId), groupId } });
+
+      if (!chore) {
+        return next(ApiError.badRequest(`Не найдено ни одной задачи`));
+      }
+
+      res.status(HTTPStatusCodes.OK).json(chore);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getChore: ${err.message}`));
+      }
+    }
+  };
+
   // POST /api/chore/chore
   createChore = async (req: ChoreCreateRequest, res: Response, next: NextFunction) => {
     try {
@@ -72,7 +102,7 @@ class ChoreController {
 
       const existChore = await ChoreModel.findOne({ where: { name: trimmedName, groupId } });
 
-      if (existChore?.name.toLowerCase() === trimmedName.toLowerCase()) {
+      if (existChore?.name.trim().toLowerCase() === trimmedName.toLowerCase()) {
         return next(ApiError.badRequest('Задача с таким именем уже существует'));
       }
 
@@ -99,7 +129,7 @@ class ChoreController {
   editChore = async (req: ChoreEditRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { name, points, categoryId } = req.body;
+      const { name, points, categoryId, isArchived } = req.body;
       const groupId = req.currentGroup?.id;
 
       if (!id) {
@@ -125,13 +155,18 @@ class ChoreController {
         }
       }
 
+      // todo: create new chore if there are/were scheduled tasks to save history
+
       chore.name = trimmedName ?? chore.name;
       chore.points = points ?? chore.points;
       chore.categoryId = categoryId ?? chore.categoryId;
+      chore.isArchived = isArchived ?? chore.isArchived;
 
       await chore.save();
 
-      res.status(HTTPStatusCodes.OK).json(chore);
+      const chores = await ChoreModel.findAll({ where: { groupId } });
+
+      res.status(HTTPStatusCodes.OK).json(chores);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`updateChore: ${err.message}`));

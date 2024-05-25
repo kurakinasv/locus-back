@@ -5,6 +5,12 @@ import ChoreModel from 'models/chore.model';
 import { UUIDString, DefaultId, NumberString } from 'typings/common';
 
 export interface ChoreGetRequest extends GroupLoggedInRequest {
+  params: {
+    id: NumberString;
+  };
+}
+
+export interface ChoresGetRequest extends GroupLoggedInRequest {
   body: {
     groupId: UUIDString;
   };
@@ -27,6 +33,7 @@ export interface ChoreEditRequest extends GroupLoggedInRequest {
     categoryId?: DefaultId;
     name?: ChoreModel['name'];
     points?: ChoreModel['points'];
+    isArchived?: ChoreModel['isArchived'];
   };
   params: {
     id: NumberString;

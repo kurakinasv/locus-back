@@ -3,9 +3,10 @@ import UserExpenseModel, { UserExpenseCreateParams } from 'models/user-expense.m
 class UserExpenseService {
   static createUserExpenses = async (data: UserExpenseCreateParams) => {
     try {
-      const { debtAmount, expenseId, userGroupId, status } = data;
+      const { debtAmount, expenseId, userGroupId, status, personalAmount: amount } = data;
 
       const userExpense = await UserExpenseModel.create({
+        personalAmount: amount,
         debtAmount,
         expenseId,
         userGroupId,
