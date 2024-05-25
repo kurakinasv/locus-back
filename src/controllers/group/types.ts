@@ -10,7 +10,7 @@ export interface GroupLoggedInRequest extends AuthUserRequest {
 }
 
 export interface GroupGetRequest extends AuthUserRequest {
-  query: {
+  params: {
     id: UUIDString;
   };
 }

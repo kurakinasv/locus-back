@@ -1,6 +1,3 @@
-import { NextFunction } from 'express';
-
-import { ApiError } from 'middleware/error';
 import GroupModel from 'models/group.model';
 import { Frequency, defaultFrequency } from 'models/schedule.model';
 import UserGroupModel from 'models/user-group.model';
@@ -32,11 +29,10 @@ class ScheduleService {
 
   static checkIfUsersInGroup = async (
     userGroupIds: UserGroupModel['id'][],
-    groupId: GroupModel['id'],
-    next: NextFunction
+    groupId: GroupModel['id']
   ) => {
     if (!userGroupIds) {
-      return next(ApiError.badRequest('Выберите хотя бы одного пользователя'));
+      return { error: 'Выберите хотя бы одного пользователя' };
     }
 
     const foundUsersInGroup = await UserGroupModel.findAll({
@@ -44,7 +40,7 @@ class ScheduleService {
     });
 
     if (foundUsersInGroup.length !== userGroupIds.length) {
-      return next(ApiError.badRequest('Пользователи не найдены в группе'));
+      return { error: 'Пользователи не найдены в группе' };
     }
 
     return true;

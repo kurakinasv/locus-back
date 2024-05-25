@@ -3,6 +3,7 @@ import { Response, NextFunction } from 'express';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { ApiError } from 'middleware/error';
 import ScheduleDateModel from 'models/scheduleDate.model';
+import ScheduleModel from 'models/schedule.model';
 
 import { ScheduleDateEditRequest } from './types';
 
@@ -18,7 +19,11 @@ class ScheduleDateController {
         return next(ApiError.unauthorized('Не передан id группы'));
       }
 
-      const scheduleDate = await ScheduleDateModel.findOne({ where: { id } });
+      const scheduleDate = await ScheduleDateModel.findOne({
+        where: { id },
+        include: [{ model: ScheduleModel, attributes: ['choreId'] }],
+        order: [['date', 'DESC']],
+      });
       console.log('editScheduleDate scheduleDate', scheduleDate?.id);
 
       if (!scheduleDate) {

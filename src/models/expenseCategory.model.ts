@@ -1,4 +1,6 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+
+import { ExpenseCategoryIcon } from 'config/expenses';
 import { DefaultId } from 'typings/common';
 
 import Group from './group.model';
@@ -39,7 +41,7 @@ class ExpenseCategory extends Model<ExpenseCategoryModel, ExpenseCategoryCreateP
     type: DataType.STRING,
     allowNull: true,
   })
-  declare icon: string | null;
+  declare icon: ExpenseCategoryIcon | null;
 
   @Column({
     type: DataType.BOOLEAN,

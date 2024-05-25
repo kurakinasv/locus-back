@@ -24,7 +24,9 @@ export const loginToGroup = (res: Response, groupId: UUIDString) => {
 };
 
 export const logoutFromGroup = (res: Response) => {
-  return res.cookie(process.env.GROUP_COOKIE_NAME, '', { expires: new Date() });
+  return res.cookie(process.env.GROUP_COOKIE_NAME, '', {
+    expires: new Date(),
+  });
 };
 
 // auth
@@ -46,7 +48,9 @@ export const checkSession = (req: Request, res: Response): JWTToken | null => {
 export const removeSessionToken = (res: Response) => {
   logoutFromGroup(res);
 
-  return res.cookie(process.env.AUTH_COOKIE_NAME, '', { expires: new Date() });
+  return res.cookie(process.env.AUTH_COOKIE_NAME, '', {
+    expires: new Date(),
+  });
 };
 
 export const getSessionToken = (req: Request) => {

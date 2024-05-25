@@ -1,6 +1,6 @@
 import 'module-alias/register.js';
 
-import express from 'express';
+import express, { Response } from 'express';
 import dotenv from 'dotenv';
 import fileUpload from 'express-fileupload';
 import path from 'path';
@@ -17,7 +17,16 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  const corsWhitelist = [
+    'http://localhost:5173',
+    'https://locus-front.netlify.app',
+    'https://dev--locus-front.netlify.app',
+  ];
+
+  if (corsWhitelist.includes(req.headers.origin ?? '')) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+  }
+
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Request-Method', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Methods', 'PUT, DELETE');
@@ -29,7 +38,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const setHeaders = (res: any, path: string) => {
+const setHeaders = (res: Response) => {
   res.setHeader('Content-Type', 'image/jpeg');
 };
 

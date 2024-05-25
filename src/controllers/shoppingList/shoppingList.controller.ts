@@ -10,6 +10,7 @@ import {
   ShoppingListCreateRequest,
   ShoppingListDeleteRequest,
   ShoppingListEditRequest,
+  ShoppingListGetRequest,
 } from './types';
 
 class ShoppingListController {
@@ -22,12 +23,42 @@ class ShoppingListController {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      const shoppingLists = await ShoppingListModel.findAll({ where: { groupId } });
+      const shoppingLists = await ShoppingListModel.findAll({
+        where: { groupId },
+        include: ['shoppingListItems'],
+      });
 
       res.json(shoppingLists);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`getShoppingLists: ${err.message}`));
+      }
+    }
+  };
+
+  // GET /api/shopping-list/list/:id
+  getShoppingList = async (req: ShoppingListGetRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const groupId = req.currentGroup?.id;
+
+      if (!groupId) {
+        return next(ApiError.badRequest('Не передан id группы'));
+      }
+
+      const shoppingList = await ShoppingListModel.findOne({
+        where: { id, groupId },
+        include: ['shoppingListItems'],
+      });
+
+      if (!shoppingList) {
+        return next(ApiError.badRequest('Список покупок не найден'));
+      }
+
+      res.status(HTTPStatusCodes.OK).json(shoppingList);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getShoppingList: ${err.message}`));
       }
     }
   };
@@ -65,7 +96,12 @@ class ShoppingListController {
 
       const shoppingList = await ShoppingListModel.create(createParams);
 
-      res.status(HTTPStatusCodes.CREATED).json(shoppingList);
+      const list = await ShoppingListModel.findOne({
+        where: { id: shoppingList.id, groupId },
+        include: ['shoppingListItems'],
+      });
+
+      res.status(HTTPStatusCodes.CREATED).json(list);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`createShoppingList: ${err.message}`));
@@ -84,7 +120,10 @@ class ShoppingListController {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      const shoppingList = await ShoppingListModel.findOne({ where: { id, groupId } });
+      const shoppingList = await ShoppingListModel.findOne({
+        where: { id, groupId },
+        include: ['shoppingListItems'],
+      });
 
       if (!shoppingList) {
         return next(ApiError.badRequest('Список покупок не найден'));
@@ -102,9 +141,14 @@ class ShoppingListController {
         purchaseDate: purchaseDate ? setEndOfDay(purchaseDate) : undefined,
       };
 
-      const editedList = await shoppingList.update(editParams);
+      await shoppingList.update(editParams);
 
-      res.status(HTTPStatusCodes.OK).json(editedList);
+      const lists = await ShoppingListModel.findAll({
+        where: { groupId },
+        include: ['shoppingListItems'],
+      });
+
+      res.status(HTTPStatusCodes.OK).json(lists);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`editShoppingList: ${err.message}`));
@@ -127,7 +171,10 @@ class ShoppingListController {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      const shoppingList = await ShoppingListModel.findOne({ where: { id, groupId } });
+      const shoppingList = await ShoppingListModel.findOne({
+        where: { id, groupId },
+        include: ['shoppingListItems'],
+      });
 
       if (!shoppingList) {
         return next(ApiError.badRequest('Список покупок не найден'));

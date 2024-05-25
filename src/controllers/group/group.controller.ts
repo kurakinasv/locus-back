@@ -32,10 +32,10 @@ class GroupController {
     }
   };
 
-  // GET /api/group/group
+  // GET /api/group/group/:id
   getGroup = async (req: GroupGetRequest, res: Response, next: NextFunction) => {
     try {
-      const { id: groupId } = req.query;
+      const { id: groupId } = req.params;
 
       if (!groupId) {
         return next(ApiError.unauthorized('Не передан id группы'));

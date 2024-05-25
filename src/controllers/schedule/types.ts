@@ -5,14 +5,20 @@ import ScheduleModel, { ScheduleCreateParams } from 'models/schedule.model';
 
 import { UUIDString, DateString, NumberString } from 'typings/common';
 
+export interface ScheduleGetRequest extends GroupLoggedInRequest {
+  params: {
+    id: NumberString;
+  };
+}
+
 export interface SchedulesGetRequest extends GroupLoggedInRequest {
   body: {
     groupId: UUIDString;
   };
   query: {
     name?: ChoreModel['name'];
-    dateFrom?: DateString; // first day of the period
-    dateTo?: DateString; // last day of the period
+    from?: DateString; // first day of the period
+    to?: DateString; // last day of the period
   };
 }
 

@@ -2,6 +2,12 @@ import { GroupLoggedInRequest } from 'controllers/group';
 import ShoppingList, { ShoppingListCreateParams } from 'models/shoppingList.model';
 import { DateString, NumberString } from 'typings/common';
 
+export interface ShoppingListGetRequest extends GroupLoggedInRequest {
+  params: {
+    id: NumberString;
+  };
+}
+
 export interface ShoppingListCreateRequest extends GroupLoggedInRequest {
   body: Omit<ShoppingListCreateParams, 'purchaseDate'> & {
     purchaseDate?: DateString;

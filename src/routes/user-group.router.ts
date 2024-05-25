@@ -9,7 +9,8 @@ const router = Router();
 
 // /api/user-group
 router.get('/current', authMiddleware, userGroupController.getCurrentUserGroup);
-router.get('/user-groups', authMiddleware, userGroupController.getUserGroups);
+router.get('/user-groups', authMiddleware, userGroupController.getUserUserGroups);
+router.get('/group-members', authGroupLoginMiddleware, userGroupController.getGroupMembers);
 router.post('/join', authMiddleware, userGroupController.joinGroup);
 router.put('/login', authMiddleware, userGroupController.loginToGroup);
 router.put('/edit', authGroupLoginMiddleware, userGroupController.editUserGroup);

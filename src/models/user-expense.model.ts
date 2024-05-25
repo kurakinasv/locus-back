@@ -10,12 +10,15 @@ export type UserExpenseStatus = 'pending' | 'partially' | 'settled';
 type UserExpenseModel = {
   id: DefaultId;
   status: UserExpenseStatus;
+  personalAmount: number;
+  debtAmount: number;
   userGroupId: UserGroup['id'];
   expenseId: Expense['id'];
 };
 
 export type UserExpenseCreateParams = {
   status: UserExpenseStatus;
+  personalAmount: number;
   debtAmount?: number;
   userGroupId: UserGroup['id'];
   expenseId: Expense['id'];
@@ -39,6 +42,13 @@ class UserExpense extends Model<UserExpenseModel, UserExpenseCreateParams> {
     defaultValue: 'pending',
   })
   declare status: UserExpenseStatus;
+
+  @Column({
+    type: DataType.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+  })
+  declare personalAmount: number;
 
   @Column({
     type: DataType.DECIMAL(10, 2),

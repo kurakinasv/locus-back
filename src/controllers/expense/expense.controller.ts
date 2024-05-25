@@ -1,31 +1,56 @@
 import { isEqual } from 'date-fns';
 import { Response, NextFunction } from 'express';
+import { Op, WhereOptions } from 'sequelize';
 
 import { availableCurrency } from 'config/expenses';
 import { HTTPStatusCodes } from 'config/status-codes';
-import { GroupLoggedInRequest } from 'controllers/group';
 import { UserExpenseService } from 'controllers/user-expense';
 import { ApiError } from 'middleware/error';
 import ExpenseModel, { Currency } from 'models/expense.model';
 import ExpenseCategoryModel from 'models/expenseCategory.model';
 import GroupModel from 'models/group.model';
+import UserExpenseModel from 'models/user-expense.model';
 import UserGroupModel from 'models/user-group.model';
 import UserModel from 'models/user.model';
-import { setStartOfDay } from 'utils/date';
+import { setEndOfDay, setStartOfDay } from 'utils/date';
 
-import { ExpenseCreateRequest, ExpenseDeleteRequest, ExpenseEditRequest } from './types';
+import {
+  ExpenseCreateRequest,
+  ExpenseDeleteRequest,
+  ExpenseEditRequest,
+  ExpenseGetRequest,
+  ExpensesGetRequest,
+} from './types';
 
 class ExpenseController {
   // GET /api/expense/expenses
-  getExpenses = async (req: GroupLoggedInRequest, res: Response, next: NextFunction) => {
+  getExpenses = async (req: ExpensesGetRequest, res: Response, next: NextFunction) => {
     try {
+      const { from, to, categoryId } = req.query;
       const groupId = req.currentGroup?.id;
 
       if (!groupId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      const expenses = await ExpenseModel.findAll({ where: { groupId } });
+      const filterParams: WhereOptions<ExpenseModel> = {
+        groupId,
+        purchaseDate: from && to ? { [Op.between]: [from, setEndOfDay(to)] } : undefined,
+        categoryId,
+      };
+
+      if (!from || !to) {
+        delete filterParams.purchaseDate;
+      }
+      if (!categoryId) {
+        delete filterParams.categoryId;
+      }
+
+      const expenses = await ExpenseModel.findAll({
+        where: filterParams,
+        order: [['purchaseDate', 'DESC']],
+        include: 'userGroups',
+      });
 
       res.status(HTTPStatusCodes.OK).json(expenses);
     } catch (err) {
@@ -35,6 +60,29 @@ class ExpenseController {
     }
   };
 
+  // GET /api/expense/expense
+  getExpense = async (req: ExpenseGetRequest, res: Response, next: NextFunction) => {
+    try {
+      const groupId = req.currentGroup?.id;
+      const { id } = req.params;
+
+      if (!groupId) {
+        return next(ApiError.badRequest('Не передан id группы'));
+      }
+
+      const expense = await ExpenseModel.findOne({ where: { id, groupId }, include: 'userGroups' });
+
+      if (!expense) {
+        return next(ApiError.notFound('Запись о трате не найдена'));
+      }
+
+      res.status(HTTPStatusCodes.OK).json(expense);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getExpense: ${err.message}`));
+      }
+    }
+  };
   // POST /api/expense/expense
   createExpense = async (req: ExpenseCreateRequest, res: Response, next: NextFunction) => {
     try {
@@ -111,9 +159,29 @@ class ExpenseController {
       });
 
       // Create all user-expense instances
-      await this._createUserExpenses({ groupId, expense, createdBy }, req, next);
+      const userExpenses = await this._createUserExpenses(
+        { groupId, expense, createdBy },
+        req,
+        next
+      );
 
-      res.status(HTTPStatusCodes.CREATED).json(expense);
+      const createdExpense = await ExpenseModel.findOne({
+        where: { id: expense.id, groupId },
+        include: 'userGroups',
+      });
+
+      if (!createdExpense || !userExpenses) {
+        console.log('Error creating expense');
+
+        return;
+      }
+
+      const response: { expense: ExpenseModel; userExpenses: UserExpenseModel[] } = {
+        expense: createdExpense,
+        userExpenses,
+      };
+
+      res.status(HTTPStatusCodes.CREATED).json(response);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`createExpense: ${err.message}`));
@@ -122,6 +190,9 @@ class ExpenseController {
   };
 
   // PUT /api/expense/expense/:id
+  /**
+   * @returns All expenses for current group
+   */
   editExpense = async (req: ExpenseEditRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
@@ -170,9 +241,13 @@ class ExpenseController {
         editParams.amount = undefined;
       }
 
-      const editedExpense = await expense.update(editParams);
+      const expenses = await ExpenseModel.findAll({
+        where: { groupId },
+        include: 'userGroups',
+        order: [['purchaseDate', 'DESC']],
+      });
 
-      res.status(HTTPStatusCodes.OK).json(editedExpense);
+      res.status(HTTPStatusCodes.OK).json(expenses);
     } catch (err) {
       if (err instanceof Error) {
         next(ApiError.badRequest(`editExpense: ${err.message}`));
@@ -210,17 +285,21 @@ class ExpenseController {
     data: { groupId: GroupModel['id']; expense: ExpenseModel; createdBy: UserModel['id'] },
     req: ExpenseCreateRequest,
     next: NextFunction
-  ) => {
+  ): Promise<void | UserExpenseModel[]> => {
     const { amount, splitMethod, userGroupIds } = req.body;
     const { groupId, expense, createdBy } = data;
 
     let debtAmount = 0;
+    let personalAmount = 0;
 
     if (splitMethod === 'equally') {
       debtAmount = amount / userGroupIds.length;
+      personalAmount = amount / userGroupIds.length;
     }
 
     // todo: other split methods
+
+    const userExpenses = [];
 
     for (const userGroupId of userGroupIds) {
       // Find user in group
@@ -232,6 +311,7 @@ class ExpenseController {
         return next(ApiError.badRequest('Не удалось найти пользователя в группе'));
       }
 
+      // todo: creator may not choose himself
       // Create user-expense instance
       const created = await UserExpenseService.createUserExpenses({
         expenseId: expense.id,
@@ -239,12 +319,17 @@ class ExpenseController {
         // Author of the record is automatically pays all amount
         status: userInGroup.userId === createdBy ? 'settled' : 'pending',
         debtAmount: userInGroup.userId === createdBy ? 0 : debtAmount,
+        personalAmount: personalAmount,
       });
 
       if (!created) {
         return next(ApiError.badRequest('Не удалось создать экземпляр user-expense'));
       }
+
+      userExpenses.push(created);
     }
+
+    return userExpenses;
   };
 }
 

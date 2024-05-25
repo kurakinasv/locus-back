@@ -30,7 +30,7 @@ type ExpenseModel = {
   description: string | null;
   purchaseDate: Date;
   splitMethod: SplitMethod;
-  status: ExpenseStatus;
+  expenseStatus: ExpenseStatus;
   createdBy: User['id'];
   groupId: Group['id'];
   categoryId: ExpenseCategory['id'] | null;

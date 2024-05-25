@@ -7,7 +7,7 @@ import { authGroupLoginMiddleware } from './config';
 const router = Router();
 
 // /api/group
-router.get('/group', authMiddleware, groupController.getGroup);
+router.get('/group/:id', authMiddleware, groupController.getGroup);
 router.post('/group', authMiddleware, groupController.createGroup);
 router.put('/group', authGroupLoginMiddleware, groupController.editGroup);
 router.put('/invite', authGroupLoginMiddleware, groupController.generateInviteCode);

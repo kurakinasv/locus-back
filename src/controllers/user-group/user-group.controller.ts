@@ -3,6 +3,7 @@ import { Response, NextFunction } from 'express';
 
 import { HTTPStatusCodes } from 'config/status-codes';
 import { AuthUserRequest } from 'controllers/auth';
+import { GroupLoggedInRequest } from 'controllers/group';
 import { loginToGroup } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
 import UserGroupModel from 'models/user-group.model';
@@ -28,6 +29,14 @@ class UserGroupController {
 
       const userGroup = await UserGroupModel.findOne({ where: { userId, isLoggedIn: true } });
 
+      if (!userGroup) {
+        return res
+          .status(HTTPStatusCodes.NOT_FOUND)
+          .json({ message: 'Пользователь не вошел ни в одну группу' });
+      }
+
+      loginToGroup(res, userGroup.groupId);
+
       res.status(HTTPStatusCodes.OK).json(userGroup);
     } catch (err) {
       if (err instanceof Error) {
@@ -37,7 +46,8 @@ class UserGroupController {
   };
 
   // GET /api/user-group/user-groups
-  getUserGroups = async (req: AuthUserRequest, res: Response, next: NextFunction) => {
+  /** Get current user's user group instances */
+  getUserUserGroups = async (req: AuthUserRequest, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
 
@@ -47,10 +57,29 @@ class UserGroupController {
 
       const userGroups = await UserGroupModel.findAll({ where: { userId } });
 
-      res.status(HTTPStatusCodes.OK).json(userGroups.map((userGroup) => userGroup.id));
+      res.status(HTTPStatusCodes.OK).json(userGroups);
     } catch (err) {
       if (err instanceof Error) {
-        next(ApiError.badRequest(`getUserGroups: ${err.message}`));
+        next(ApiError.badRequest(`getUserUserGroups: ${err.message}`));
+      }
+    }
+  };
+
+  // GET /api/user-group/group-members
+  getGroupMembers = async (req: GroupLoggedInRequest, res: Response, next: NextFunction) => {
+    try {
+      const groupId = req.currentGroup?.id;
+
+      if (!groupId) {
+        return next(ApiError.badRequest('Не передан id группы'));
+      }
+
+      const groupMembers = await UserGroupModel.findAll({ where: { groupId } });
+
+      res.status(HTTPStatusCodes.OK).json(groupMembers);
+    } catch (err) {
+      if (err instanceof Error) {
+        next(ApiError.badRequest(`getGroupMembers: ${err.message}`));
       }
     }
   };

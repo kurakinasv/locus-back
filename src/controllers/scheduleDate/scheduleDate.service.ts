@@ -1,4 +1,3 @@
-import { NextFunction } from 'express';
 import { Op, WhereOptions } from 'sequelize';
 
 import ScheduleService from 'controllers/schedule/schedule.service';
@@ -6,6 +5,7 @@ import { ApiError } from 'middleware/error';
 import ScheduleModel from 'models/schedule.model';
 import ScheduleDate from 'models/scheduleDate.model';
 import ScheduleDateModel, { ScheduleDateCreateParams } from 'models/scheduleDate.model';
+import { setEndOfDay } from 'utils/date';
 
 import { SchedulesGetParams } from './types';
 
@@ -30,15 +30,18 @@ class ScheduleDateService {
         delete whereOptions.completed;
       }
 
-      const scheduleDates = await ScheduleDateModel.findAll({ where: whereOptions });
+      const scheduleDatesOrdered = await ScheduleDateModel.findAll({
+        where: whereOptions,
+        include: [{ model: ScheduleModel, attributes: ['choreId'] }],
+        order: [['date', 'DESC']],
+      });
 
       console.log(
-        'getScheduleDates sheduleDates',
-        scheduleDates.length,
-        scheduleDates.map((s) => s.id)
+        'scheduleDatesOrdered',
+        scheduleDatesOrdered.map((s) => [s.id, s.date])
       );
 
-      return scheduleDates;
+      return scheduleDatesOrdered;
     } catch (err) {
       if (err instanceof Error) {
         console.error(err.message);
@@ -47,12 +50,12 @@ class ScheduleDateService {
     }
   };
 
-  static createScheduleDate = async (data: ScheduleDateCreateParams, next: NextFunction) => {
+  static createScheduleDate = async (data: ScheduleDateCreateParams) => {
     try {
       const scheduleDate = await ScheduleDateModel.create(data);
 
       if (!scheduleDate) {
-        return next(ApiError.badRequest('Не удалось создать запланированную задачу'));
+        return { error: 'Не удалось создать запланированную задачу' };
       }
 
       return scheduleDate;
@@ -63,11 +66,7 @@ class ScheduleDateService {
     }
   };
 
-  static createScheduleDates = async (
-    schedule: ScheduleModel,
-    next: NextFunction,
-    skipCompleted = false
-  ) => {
+  static createScheduleDates = async (schedule: ScheduleModel, skipCompleted = false) => {
     try {
       const { id, userGroupIds, frequency, dateStart, dateEnd } = schedule;
 
@@ -86,9 +85,11 @@ class ScheduleDateService {
 
       let currentUserGroupIdIndex = 0;
 
+      const endOfDayOfEndDate = setEndOfDay(new Date(dateEnd || dateStart).toISOString());
+
       for (
-        let currentDate = new Date(dateStart);
-        currentDate <= new Date(dateEnd || dateStart);
+        let currentDate = setEndOfDay(dateStart.toISOString());
+        currentDate <= endOfDayOfEndDate;
         // Count from each iteration start date
         currentDate = ScheduleService.getNextDateByFrequency(currentDate, frequency)
       ) {
@@ -108,15 +109,15 @@ class ScheduleDateService {
           });
         }
 
-        const scheduleDate = await ScheduleDateService.createScheduleDate(
-          {
-            date: currentDate,
-            scheduleId: id,
-            userGroupId: userGroupIds[currentUserGroupIdIndex],
-          },
-          next
-        );
-        console.log('new scheduleDate', scheduleDate);
+        const scheduleDate = await ScheduleDateService.createScheduleDate({
+          date: currentDate,
+          scheduleId: id,
+          userGroupId: userGroupIds[currentUserGroupIdIndex],
+        });
+
+        if (scheduleDate && 'error' in scheduleDate) {
+          return { error: scheduleDate.error };
+        }
 
         if (frequency === 'never') {
           break;
@@ -126,7 +127,9 @@ class ScheduleDateService {
         currentUserGroupIdIndex = (currentUserGroupIdIndex + 1) % userGroupIds.length;
       }
 
-      return true;
+      const taskWithChoreId = await ScheduleDateService.getOrderedTasksWithChoreId([id]);
+
+      return taskWithChoreId;
     } catch (err) {
       if (err instanceof Error) {
         ApiError.badRequest(`createScheduleDates: ${err.message}`);
@@ -134,6 +137,22 @@ class ScheduleDateService {
 
       return false;
     }
+  };
+
+  static getOrderedTasksWithChoreId = async (
+    scheduleIds?: ScheduleModel['id'][],
+    whereOpts?: WhereOptions
+  ) => {
+    const whereOptions: WhereOptions = {
+      scheduleId: scheduleIds,
+      ...whereOpts,
+    };
+
+    return await ScheduleDateModel.findAll({
+      where: whereOptions,
+      include: [{ model: ScheduleModel, attributes: ['choreId'] }],
+      order: [['date', 'DESC']],
+    });
   };
 }
 
