@@ -1,5 +1,8 @@
 import path from 'path';
 import { Sequelize } from 'sequelize-typescript';
+import { config } from 'dotenv';
+
+config();
 
 abstract class DataBase<DataBaseT> {
   db: DataBaseT;

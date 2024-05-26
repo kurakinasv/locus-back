@@ -19,6 +19,8 @@ const app = express();
 app.use((req, res, next) => {
   const corsWhitelist = [
     'http://localhost:5173',
+    'http://localhost:4173',
+    'http://185.178.46.161',
     'https://locus-front.netlify.app',
     'https://dev--locus-front.netlify.app',
   ];
