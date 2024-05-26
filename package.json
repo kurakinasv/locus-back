@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "nodemon",
+    "start": "node ./dist/main.js",
     "start:prod": "yarn build && node ./dist/main.js",
     "build": "./node_modules/.bin/rimraf ./dist && ./node_modules/.bin/tsc --skipLibCheck",
     "lint": "eslint src --ext js,ts --report-unused-disable-directives --max-warnings 20",
