@@ -3,7 +3,9 @@ import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import { v4 } from 'uuid';
 
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
+import { NotificationService } from 'controllers/notification';
 import { loginToGroup, logoutFromGroup } from 'infrastructure/session';
 import GroupModel from 'models/group.model';
 import UserGroupModel from 'models/user-group.model';
@@ -114,10 +116,11 @@ class GroupController {
       const { name } = req.body;
       const toEditId = req.currentGroup?.id;
       const image = req.files?.files;
+      const userId = req.user?.id;
 
       const group = await GroupModel.findOne({ where: { id: toEditId }, include: ['users'] });
 
-      if (!group) {
+      if (!group || !toEditId || !userId) {
         return next(ApiError.badRequest('Группа не найдена'));
       }
 
@@ -139,6 +142,16 @@ class GroupController {
       group.image = fileName;
 
       const newGroup = await group.save();
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.groupSettingsChanged,
+        groupId: toEditId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json(newGroup);
     } catch (err) {

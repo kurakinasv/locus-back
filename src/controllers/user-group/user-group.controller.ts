@@ -1,9 +1,11 @@
 import { isAfter } from 'date-fns';
 import { Response, NextFunction } from 'express';
 
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { AuthUserRequest } from 'controllers/auth';
 import { GroupLoggedInRequest } from 'controllers/group';
+import { NotificationService } from 'controllers/notification';
 import { loginToGroup } from 'infrastructure/session';
 import { ApiError } from 'middleware/error';
 import UserGroupModel from 'models/user-group.model';
@@ -116,6 +118,16 @@ class UserGroupController {
 
       loginToGroup(res, group.id);
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.userJoinedGroup,
+        groupId: group.id,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json({ group, userInGroup });
     } catch (err) {
       if (err instanceof Error) {
@@ -195,6 +207,16 @@ class UserGroupController {
       // todo: handle single person exit
 
       await UserGroupModel.destroy({ where: { userId, groupId } });
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.groupSettingsChanged,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Пользователь вышел из группы' });
     } catch (err) {
