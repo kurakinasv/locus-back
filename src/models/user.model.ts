@@ -4,6 +4,8 @@ import { UUIDString } from 'typings/common';
 
 import Group from './group.model';
 import UserGroup from './user-group.model';
+import Notification from './notification.model';
+import UserNotification from './user-notification.model';
 
 @Table({
   // timestamps: true, // default, createdAt and updatedAt create automatically
@@ -54,6 +56,9 @@ class User extends Model {
 
   @BelongsToMany(() => Group, () => UserGroup)
   declare groups: Array<Group & { UserGroup: UserGroup }>;
+
+  @BelongsToMany(() => Notification, () => UserNotification)
+  declare notifications: Array<Notification & { UserNotification: UserNotification }>;
 }
 
 export default User;
