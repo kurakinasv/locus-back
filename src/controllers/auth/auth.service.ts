@@ -2,6 +2,7 @@ import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { UUIDString } from 'typings/common';
+import { isProd } from 'utils/isEnv';
 
 const EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -18,7 +19,7 @@ export const createToken = (res: Response, userId: UUIDString, isAdmin = false) 
   res.cookie(process.env.AUTH_COOKIE_NAME, token, {
     expires: expiresAt,
     httpOnly: true,
-    // todo: secure
+    secure: isProd(),
   });
 
   return token;
