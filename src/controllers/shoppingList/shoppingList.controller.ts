@@ -1,7 +1,9 @@
 import { Response, NextFunction } from 'express';
 
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { GroupLoggedInRequest } from 'controllers/group';
+import { NotificationService } from 'controllers/notification';
 import { ApiError } from 'middleware/error';
 import ShoppingListModel, { ShoppingListCreateParams } from 'models/shoppingList.model';
 import { setEndOfDay } from 'utils/date';
@@ -72,8 +74,9 @@ class ShoppingListController {
     try {
       const { name, description, purchaseDate } = req.body;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -101,6 +104,16 @@ class ShoppingListController {
         include: ['shoppingListItems'],
       });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.shoppingListCreated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.CREATED).json(list);
     } catch (err) {
       if (err instanceof Error) {
@@ -115,8 +128,9 @@ class ShoppingListController {
       const { id } = req.params;
       const { name, description, purchaseDate } = req.body;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -148,6 +162,16 @@ class ShoppingListController {
         include: ['shoppingListItems'],
       });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.shoppingListUpdated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json(lists);
     } catch (err) {
       if (err instanceof Error) {
@@ -166,8 +190,9 @@ class ShoppingListController {
     try {
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -181,6 +206,16 @@ class ShoppingListController {
       }
 
       await shoppingList.destroy();
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.shoppingListDeleted,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Список покупок успешно удалён' });
     } catch (err) {

@@ -3,7 +3,9 @@ import { Response, NextFunction } from 'express';
 import { Op, WhereOptions } from 'sequelize';
 
 import { availableCurrency } from 'config/expenses';
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
+import { NotificationService } from 'controllers/notification';
 import { UserExpenseService } from 'controllers/user-expense';
 import { ApiError } from 'middleware/error';
 import ExpenseModel, { Currency } from 'models/expense.model';
@@ -181,6 +183,16 @@ class ExpenseController {
         userExpenses,
       };
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.expenseCreated,
+        groupId,
+        userId: createdBy,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.CREATED).json(response);
     } catch (err) {
       if (err instanceof Error) {
@@ -198,8 +210,9 @@ class ExpenseController {
       const { id } = req.params;
       const { name, amount, categoryId, description, purchaseDate } = req.body;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -247,6 +260,16 @@ class ExpenseController {
         order: [['purchaseDate', 'DESC']],
       });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.expenseUpdated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json(expenses);
     } catch (err) {
       if (err instanceof Error) {
@@ -260,9 +283,10 @@ class ExpenseController {
     try {
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
-        return next(ApiError.badRequest('Не передан id группы'));
+      if (!groupId || !userId) {
+        return next(ApiError.badRequest('Не передан id группы или пользователя'));
       }
 
       const expense = await ExpenseModel.findOne({ where: { id, groupId } });
@@ -272,6 +296,16 @@ class ExpenseController {
       }
 
       await expense.destroy();
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.expenseDeleted,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Запись о расходах удалена' });
     } catch (err) {

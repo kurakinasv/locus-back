@@ -7,6 +7,7 @@ import echoRouter from './echo.router';
 import expenseRouter from './expense.router';
 import expenseCategoryRouter from './expenseCategory.router';
 import groupRouter from './group.router';
+import notificationRouter from './notification.router';
 import scheduleRouter from './schedule.router';
 import scheduleDateRouter from './scheduleDate.router';
 import shoppingListRouter from './shoppingList.router';
@@ -32,6 +33,7 @@ const initRoutes = (app: Express) => {
   router.use('/user-expense', userExpenseRouter);
   router.use('/shopping-list', shoppingListRouter);
   router.use('/shopping-list', shoppingListItemRouter);
+  router.use('/notification', notificationRouter);
 
   app.use('/api', router);
 };

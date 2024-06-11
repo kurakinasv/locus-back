@@ -2,13 +2,16 @@ import { isAfter, isToday } from 'date-fns';
 import { Response, NextFunction } from 'express';
 import { Op, WhereOptions } from 'sequelize';
 
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
 import { GroupLoggedInRequest } from 'controllers/group';
+import { NotificationService } from 'controllers/notification';
 import { ScheduleDateService } from 'controllers/scheduleDate';
 import { ApiError } from 'middleware/error';
 import ChoreModel from 'models/chore.model';
 import UserGroupModel from 'models/user-group.model';
 import ScheduleModel, { ScheduleCreateParams } from 'models/schedule.model';
+import { setEndOfDay } from 'utils/date';
 
 import ScheduleService from './schedule.service';
 import {
@@ -17,7 +20,6 @@ import {
   ScheduleGetRequest,
   SchedulesGetRequest,
 } from './types';
-import { setEndOfDay } from 'utils/date';
 
 class ScheduleController {
   // GET /api/schedule/schedule
@@ -122,7 +124,7 @@ class ScheduleController {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
-      if (!(choreId && dateStart && userGroupIds)) {
+      if (!(choreId && dateStart && userGroupIds && createdBy)) {
         return next(ApiError.badRequest('Не переданы обязательные параметры'));
       }
 
@@ -197,6 +199,16 @@ class ScheduleController {
         scheduleIds: groupSchedules.map((s) => s.id),
       });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.scheduleCreated,
+        groupId,
+        userId: createdBy,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.CREATED).json({ schedule, tasks: allScheduledTasks });
     } catch (err) {
       if (err instanceof Error) {
@@ -211,8 +223,9 @@ class ScheduleController {
       const { dateEnd, alternatingMethod, userGroupIds } = req.body;
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -274,6 +287,16 @@ class ScheduleController {
         return next(ApiError.badRequest('Не удалось изменить расписание'));
       }
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.scheduleUpdated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json(editedSchedule);
     } catch (err) {
       if (err instanceof Error) {
@@ -288,8 +311,9 @@ class ScheduleController {
     try {
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -326,6 +350,16 @@ class ScheduleController {
 
       await schedule.update({ isArchived: true });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.scheduleDeleted,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json({ message: 'Расписание успешно архивировано' });
     } catch (err) {
       if (err instanceof Error) {
@@ -339,8 +373,9 @@ class ScheduleController {
     try {
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!groupId) {
+      if (!groupId || !userId) {
         return next(ApiError.badRequest('Не передан id группы'));
       }
 
@@ -355,6 +390,16 @@ class ScheduleController {
       }
 
       await schedule.destroy();
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.scheduleDeleted,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Расписание успешно удалено' });
     } catch (err) {

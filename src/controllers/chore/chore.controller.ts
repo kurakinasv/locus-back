@@ -1,6 +1,8 @@
 import { Response, NextFunction } from 'express';
 
+import { NotificationType } from 'config/notifications';
 import { HTTPStatusCodes } from 'config/status-codes';
+import { NotificationService } from 'controllers/notification';
 import { ApiError } from 'middleware/error';
 import ChoreModel from 'models/chore.model';
 import ChoreCategoryModel from 'models/choreCategory.model';
@@ -87,10 +89,11 @@ class ChoreController {
     try {
       const { categoryId, name, points } = req.body;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
       const trimmedName = name?.trim();
 
-      if (!groupId || !categoryId || !trimmedName) {
+      if (!groupId || !categoryId || !trimmedName || !userId) {
         return next(ApiError.badRequest('Не переданы все необходимые данные'));
       }
 
@@ -117,6 +120,16 @@ class ChoreController {
         return next(ApiError.badRequest('Не удалось создать задачу'));
       }
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.choreCreated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.CREATED).json(chore);
     } catch (err) {
       if (err instanceof Error) {
@@ -131,9 +144,10 @@ class ChoreController {
       const { id } = req.params;
       const { name, points, categoryId, isArchived } = req.body;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!id) {
-        return next(ApiError.badRequest('Не передан id задачи'));
+      if (!id || !groupId || !userId) {
+        return next(ApiError.badRequest('Не передан id задачи или группы'));
       }
 
       const chore = await ChoreModel.findOne({ where: { id, groupId } });
@@ -166,6 +180,16 @@ class ChoreController {
 
       const chores = await ChoreModel.findAll({ where: { groupId } });
 
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.choreCreated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
+
       res.status(HTTPStatusCodes.OK).json(chores);
     } catch (err) {
       if (err instanceof Error) {
@@ -179,8 +203,9 @@ class ChoreController {
     try {
       const { id } = req.params;
       const groupId = req.currentGroup?.id;
+      const userId = req.user?.id;
 
-      if (!id) {
+      if (!id || !groupId || !userId) {
         return next(ApiError.badRequest('Не передан id задачи'));
       }
 
@@ -193,6 +218,16 @@ class ChoreController {
       // todo: archive chore if there are/were scheduled tasks
 
       await chore.destroy();
+
+      const notificationResult = await NotificationService.sendNotification({
+        type: NotificationType.choreCreated,
+        groupId,
+        userId,
+      });
+
+      if ('error' in notificationResult) {
+        return next(ApiError.internal(notificationResult.error));
+      }
 
       res.status(HTTPStatusCodes.OK).json({ message: 'Задача удалена' });
     } catch (err) {
